@@ -296,6 +296,9 @@ function feed_refresh($feed) {
           item_parse($feed, $item);
         }
       }
+      if (function_exists("taxonomy_node_get_terms")) {
+        $feed->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
+      }
 
       $feed->changed = time();
 
