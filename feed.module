@@ -232,9 +232,8 @@ function feed_link($type, $node = 0, $main = 0) {
   }
 
   if (($type == "admin") && user_access("administer news feeds")) {
-    menu_add("feed management", url("admin/feed"), t("News feeds"), t("Display all news feeds."), "content management", 8);
-//     menu_add("add new feed", url("admin/feed/add"), t("add new feed"), t("Add a news feed."), "feed management", 0, 1);
-     menu_add("help", url("admin/feed/help"), t("help"), NULL, "feed management");
+    menu_add("admin/feed", "feed management", "node_admin", NULL, 8);
+    menu_add("admin/feed/help", "help");
   }
 
   return $links ? $links : array();
