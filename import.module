@@ -13,20 +13,38 @@ function import_perm() {
 }
 
 function import_link($type, $node = 0, $main = 0) {
-  if ($type == "import") {
-    $links[] = l(t("latest news"), "import/", array("title" => t("Read the latest imported news.")));
-    $links[] = l(t("news sources"), "import/sources", array("title" => t("View a list of all the websites we import news from.")));
-    if (module_exist("taxonomy_dhtml")) {
-      $links[] = l(t("news by category"), "import/categories/item", array("title" => t("View a list of news items organized by category.")));
-      $links[] = l(t("news sources by category"), "import/categories/feed", array("title" => t("View a list of feeds organized by category.")));
+  if ($type == "system" && user_access("access import")) {
+    if (!module_exist("feed") || !module_exist("item")) {
+      menu("import", t("news"), "import_page_error", 0);
+    }
+    else {
+      menu("import", t("news"), "import_page_latest", 0);
+      menu("import/sources", t("sources"), "import_page_sources", 0);
+      if (module_exist("taxonomy_dhtml")) {
+        menu("import/categories/item", t("categories"), "import_categories", 0);
+        menu("import/categories/feed", t("sources by category"), "import_categories", 0);
+      }
     }
   }
 
-  if (($type == "page") && (user_access("access import"))) {
-    $links[] = l(t("import"), "import/", array("title" => t("Read the latest imported news.")));
-  }
-
   return $links ? $links : array();
+}
+
+function import_page() {
+  if (!module_exist("feed") || !module_exist("item")) {
+    import_page_error();
+  }
+  else {
+    if (arg(1) == "sources") {
+      import_page_sources();
+    }
+    else if (arg(1) == "categories") {
+      import_categories();
+    }
+    else {
+      import_page_latest();
+    }
+  }
 }
 
 function import_theme_latestitem($node) {
@@ -36,10 +54,10 @@ function import_theme_latestitem($node) {
 function import_page_latest() {
   theme("header", t("Latest news"));
 
-  import_menu();
-
   $nids = module_invoke_all("import", "items");
-  $result = pager_query("SELECT nid FROM {node} WHERE nid IN (". implode(",", $nids) .") ORDER BY created DESC, nid DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0); 
+  if ($nids) {
+    $result = pager_query("SELECT nid FROM {node} WHERE nid IN (". implode(",", $nids) .") ORDER BY created DESC, nid DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0); 
+  }
 
   while ($import_node = db_fetch_object($result)) {
     theme("import_theme_latestitem", node_load(array("nid" => $import_node->nid)));
@@ -50,10 +68,13 @@ function import_page_latest() {
   theme("footer");
 }
 
-function import_categories($type) {
+function import_categories() {
+  $type = arg(2);
+  if ($type != "item" && $type != "feed") {
+    $type = "item";
+  }
   $boxes = taxonomy_dhtml_overview($type);
   theme("header", ($type == "item" ? t("News by category") : t("News sources by category")));
-  import_menu();
   for ($n=0; $n < count($boxes); $n++) {
     theme("box", $boxes[$n]["subject"], $boxes[$n]["content"]);
   }
@@ -67,10 +88,10 @@ function import_theme_source($node) {
 function import_page_sources() {
   theme("header", t("News sources"));
 
-  import_menu();
-
   $nids = module_invoke_all("import", "sources");
-  $result = pager_query("SELECT nid FROM {node} WHERE nid IN (". implode(",", $nids) .") ORDER BY title, nid", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  if ($nids) {
+    $result = pager_query("SELECT nid FROM {node} WHERE nid IN (". implode(",", $nids) .") ORDER BY title, nid", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  }
 
   while ($import_source = db_fetch_object($result)) {
     theme("import_theme_source", node_load(array("nid" => $import_source->nid)));
@@ -81,34 +102,9 @@ function import_page_sources() {
   theme("footer");
 }
 
-function import_menu() {
-  $links = module_invoke_all("link", "import");
-  theme("import_theme_menu", $links);
-}
-
-function import_theme_menu($links) {
-  theme("box", t("News feeds"), "<div align=\"center\">". theme("links", $links) ."</div>");
-}
-
-function import_page() {
-  $op = arg(1);
-
-  if (!module_exist("feed") || !module_exist("item")) {
-    theme("header");
-    print theme("theme_error", t("For the import module to function properly please ensure that both the feed and item modules are enabled in the ". l(t("modules configuration"), "admin/system/modules") ." page."));
-    theme("footer");
-    return;
-  }
-  switch ($op) {
-    case "sources":
-      import_page_sources();
-      break;
-    case "categories":
-      $type = arg(2);
-      import_categories($type);  
-      break;  
-    default:
-      import_page_latest();
-  }
+function import_page_error() {
+  theme("header");
+  print theme("theme_error", t("For the import module to function properly please ensure that both the feed and item modules are enabled in the ". l(t("modules configuration"), "admin/system/modules") ." page."));
+  theme("footer");
 }
 ?>
