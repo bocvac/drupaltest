@@ -1,10 +1,6 @@
 <?php
 // $Id$
 
-function item_system($field) {
-  $system["description"] = t("Enables items for feeds.");
-  return $system[$field];
-}
 
 function item_node_name($node) {
   return t("news item");
@@ -12,6 +8,8 @@ function item_node_name($node) {
 
 function item_help($section = "admin/system/feeds") {
   switch ($section) {
+    case 'admin/system/modules#description':
+      return t('Enables items for feeds.');
     case 'node/add#item':
       $output = t("A news item is an item that is part of an RSS feed.");
       break;

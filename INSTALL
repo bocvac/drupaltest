@@ -1,6 +1,8 @@
 INSTALL
 =========
-1. Delete the import.module from your drupal installation:
+0. (IMPORTANT) remove the files node_aggregator_convert.php from your root and the module directory if you are not converting from the old aggregator module (IMPORTANT)
+
+1. Delete the aggregator.module from your drupal installation:
    rm /my/drupal/dir/modules/import.module
 2. Drop the tables in mysql:
    DROP TABLE item;
@@ -8,7 +10,7 @@ INSTALL
    DROP TABLE bundle;
 3. install the new tables:
    mysql -p database <import.mysql
-4. Edit your .htacces. Put a # in fron of this line:
+4. Edit your .htaccess. Put a # in fron of this line:
    php_value allow_call_time_pass_reference  Off
 5. Copy *.module to the modules directory:
    cp *.module /my/drupal/dir/modules/

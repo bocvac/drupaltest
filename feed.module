@@ -1,17 +1,15 @@
 <?php
 // $Id$
 
-function feed_system($field) {
-  $system["description"] = t("Enables RSS feeds.");
-  return $system[$field];
-}
-
 function feed_node_name($node) {
   return t("news feed");
 }
 
 function feed_help($section = "admin/system/feeds") {
   switch ($section) {
+    case 'admin/system/modules#description':
+      $output = t("Enables RSS feeds.");
+      break;
     case "admin/system/feeds":
       $output = "<p>This page is designed for creation and administration of news feeds. Here you can add new feeds, modify individual settings, and update the content contained in each feed.</p>";
       $output .= "<p>In order to add a feed, you will need to enter the URL and click the \"Add feed\" button. If you wish to update the feed when you add it, simply leave the \"Do initial refresh\" checkbox checked. If you uncheck this box, the feed will not be initialized until you first click \"Refresh.\" If you wish to modify the default settings for feeds, you can do so via the ". l("feed defaults page", "admin/system/modules/feed").". Alternatively, you can modify the settings for each individual feed by clicking the \"administer\" link on this page.</p>";
@@ -22,7 +20,7 @@ function feed_help($section = "admin/system/feeds") {
       $output .= "<p>These are the <b>default</b> settings for new feeds added via the ". l("feed administration page", "admin/system/feeds") .". Set up your feed preferences properly here before you add feeds.</p>";
       break;
     case 'node/add#feed':
-      $output = t("A news feed is a source of news from other site(s).");
+      $output = t("A news feed is a source of news from other site(s). If you add one from this page you have full power over all the content. An easier way is using <a href=\"%aggregate\">the aggregator administration</a>", array('%aggregate'=>url('admin/aggregator')));
       break;
   }
 
@@ -241,8 +239,8 @@ function feed_link($type, $node = 0, $main = 0) {
     $links[] = l(t("read more"), "node/view/$node->nid", array("title" => t("Read more news from this feed.")));
   }
 
-  if (($type == "system") && user_access("administer news feeds")) {
-    menu("admin/system/feeds", t("feeds"), "feed_admin", 8);
+  if ($type == "system") {
+    menu('admin/aggregator', t('feeds'), user_access("administer news feeds") ? 'feed_admin' : MENU_DENIED);
   }
 
   return $links ? $links : array();

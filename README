@@ -1,9 +1,12 @@
 README
 ========
-This is a new version of the import module that comes with Drupal.
+Previously this module was called import module. But because this name was used elsewhere
+the module has been renamed. 
+
+This is an alternative version of the aggregate module that comes with Drupal.
 Read the INSTALL file carefully, installation of this module is not trivial.
 
-The main advantage of the import module suite is that RSS items are stored as 
+The main advantage of the node_aggregate module suite is that RSS items are stored as 
 first class nodes. That means that they can be promoted to home page, queued, commented upon, etc.
 
 Further, RSS item nodes inherit the taxonomy terms that are assigned 
@@ -21,3 +24,4 @@ FEATURES
 BUGS, COMMENTS, QUESTIONS ETC.
 ================================
 Please send to bje@dijkman.nl
+Or ber@webschuur.com
