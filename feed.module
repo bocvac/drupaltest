@@ -785,7 +785,13 @@ function rss_parse($text) {
 
   $rss = new StdClass;
 
-  $parser = xml_parser_create_ns();
+  // extract the XML file's encoding (the XML parser in PHP4 doesn't do this by itself):
+  $encoding = 'utf-8';
+  if (ereg('^<\?xml[^>]+encoding="([^"]+)"', $data, $match)) {
+    $encoding = $match[1];
+  }
+
+  $parser = xml_parser_create_ns($encoding);
   xml_set_element_handler($parser, "rss_xml_elemStart", "rss_xml_elemEnd");
   xml_set_character_data_handler($parser, "rss_xml_cdata");
   xml_parser_set_option($parser, XML_OPTION_TARGET_ENCODING, "utf-8");
