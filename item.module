@@ -251,23 +251,23 @@ function item_parse($feed, $item) {
 function item_theme_pageitem($node) {
 
 
-  theme("node", $node, 0);
+  print theme("node", $node, 0);
 }
 
 function item_page_last($result) {
   global $user;
 
-  theme("header");
+  print theme("header");
 
   while ($node = db_fetch_object($result)) {
-    theme("item_theme_pageitem", node_load(array("nid" => $node->nid)));
+    print theme("item_theme_pageitem", node_load(array("nid" => $node->nid)));
   }
 
   print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   print "<div align=\"right\">". l("<img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "item/feed", array("title" => t("See these items in XML format."))) ."</div>\n";
 
-  theme("footer");
+  print theme("footer");
 }
 
 function item_feed_last($result) {
