@@ -533,16 +533,21 @@ function rss_xml_elemStart($parser, $tag, $attribs) {
       $rss->_type = 1; // RSS 1.0
       break;
     case "HTTP://PURL.ORG/RSS/1.0/:CHANNEL":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:CHANNEL":
     case "CHANNEL":
       $rss->_section = "channel";
       break;
     case "HTTP://PURL.ORG/RSS/1.0/:ITEMS":
     case "HTTP://PURL.ORG/RSS/1.0/:IMAGE":
+    case "HTTP://PURL.ORG/RSS/1.0/:TEXTINPUT":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:IMAGE":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:TEXTINPUT":
     case "IMAGE":
     case "TEXTINPUT":
       unset($rss->_section);
       break;
     case "HTTP://PURL.ORG/RSS/1.0/:ITEM":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:ITEM":
     case "ITEM":
       $rss->_section = "item";
       $rss->_item = array();
@@ -558,6 +563,7 @@ function rss_xml_elemEnd($parser, $tag) {
   if (isset($rss->_section) && ($rss->_section != "")) {
     switch($tag) {
       case "HTTP://PURL.ORG/RSS/1.0/:ITEM":
+      case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:ITEM":
       case "ITEM":
         unset($rss->_section);
         if (isset($item["dc_date"]) && ($item["dc_date"] != "")) {
@@ -575,6 +581,7 @@ function rss_xml_elemEnd($parser, $tag) {
   else {
     switch ($tag) {
       case "HTTP://PURL.ORG/RSS/1.0/:CHANNEL":
+      case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:CHANNEL":
       case "CHANNEL":
         if (isset($rss->dc_date) && ($rss->dc_date != "")) {
           $rss->date = $rss->dc_date;
@@ -590,6 +597,8 @@ function rss_xml_elemEnd($parser, $tag) {
         break;
       case "HTTP://PURL.ORG/RSS/1.0/:IMAGE":
       case "HTTP://PURL.ORG/RSS/1.0/:TEXTINPUT":
+      case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:IMAGE":
+      case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:TEXTINPUT":
       case "IMAGE":
       case "TEXTINPUT":
         $rss->_section = "channel";
@@ -628,14 +637,17 @@ function _rss_xml_channel_tagtr($tag) {
   switch ($tag) {
     case "TITLE":
     case "HTTP://PURL.ORG/RSS/1.0/:TITLE":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:TITLE":
       return "title";
       break;
     case "LINK":
     case "HTTP://PURL.ORG/RSS/1.0/:LINK":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:LINK":
       return "link";
       break;
     case "DESCRIPTION":
     case "HTTP://PURL.ORG/RSS/1.0/:DESCRIPTION":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:DESCRIPTION":
       return "description";
       break;
     case "LANGUAGE":
@@ -685,10 +697,12 @@ function _rss_xml_item_tagtr($tag) {
   switch ($tag) {
     case "TITLE":
     case "HTTP://PURL.ORG/RSS/1.0/:TITLE":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:TITLE":
       return "title";
       break;
     case "LINK":
     case "HTTP://PURL.ORG/RSS/1.0/:LINK":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:LINK":
       return "link";
       break;
     case "DESCRIPTION":
