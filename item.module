@@ -174,7 +174,8 @@ function item_new($feed, $item) {
   $weight = $item["date"] ? 0 : array_shift(db_fetch_array(db_query("SELECT MAX(weight)+1 AS newweight FROM item WHERE parent = '%s'", $feed->nid)));
   $name = $item["creator"] ? $item["creator"] : $feed->creator;
 
-  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => 0, "comment" => $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name, "taxonomy" => array_keys(taxonomy_node_get_terms($feed->nid)));
+  // automatically disable local commenting if the item already comes with a comments link
+  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => 0, "comment" => $item["comments"] ? 0 : $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name, "taxonomy" => array_keys(taxonomy_node_get_terms($feed->nid)));
   
   $node = node_validate($fields, $error);
 
