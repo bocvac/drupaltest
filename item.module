@@ -221,18 +221,21 @@ function item_renew($feed, $node, $item) {
   $body = $item["description"] ? $item["description"] : "";
   $link = $item["link"] ? $item["link"] : $feed->link;
   $name = $item["creator"] ? $item["creator"] : $feed->creator;
+  
+  // Only update the node if one of the node fields has changed in the RSS feed
+  if (md5($node->title) != md5($title) || md5($node->body) != md5($body) || md5($node->link) != md5($link) || md5($node->name) != md5($name)) { // something has changed
+    $node->title = $title;
+    $node->guid = ($guid == "") ? $node->guid : $guid;
+    $node->body = $body;
+    $node->link = $link;
+    $node->commentsurl = $item["comments"];
+    $node->comments = isset($item["comments"]) ? 0 : $node->comments;
+    $node->name = $name;
 
-  $node->title = $title; // don't really need to check since it's either different (need for update) or the same
-  $node->guid = ($guid == "") ? $node->guid : $guid;
-  $node->body = $body;
-  $node->link = $link;
-  $node->commentsurl = $item["comments"];
-  $node->comments = isset($item["comments"]) ? 0 : $node->comments;
-  $node->name = $name;
+    $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
 
-  $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
-
-  node_submit($node);
+    node_submit($node);
+  }
 }
 
 // feed is *node*

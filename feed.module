@@ -209,7 +209,7 @@ function feed_form_fields(&$node, &$help, &$error) {
 
 function feed_form(&$node, &$help, &$error) {
   global $edit;
-  $expires = array(0 => t("Never"), 604800 => t("One week"), 1209600 => t("Two weeks"), 2419200 => t("Four weeks"));
+  $expires = array(0 => t("Never"), 604800 => t("One week"), 1209600 => t("Two weeks"), 2419200 => t("Four weeks"),7257600 => t("3 Months"),14515200 =>t("6 Months"),31449600 => t("One Year"));
 
   $output = "";
 
