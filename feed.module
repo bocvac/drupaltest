@@ -409,7 +409,7 @@ function feed_admin() {
         case t("Add feed"):
           $output = feed_add_from_url($edit["url"]);
           break;
-        case "Refresh":
+        case t("Refresh"):
           $output = feed_refresh(node_load(array("nid" => $edit["nid"])));
           break;
       }
@@ -441,7 +441,7 @@ function feed_admin_overview() {
 
   while ($feed = db_fetch_object($feeds)) {
     $refresh = form_hidden("nid", "$feed->nid");
-    $refresh .= form_submit("Refresh", "edit[op]");
+    $refresh .= form_submit(t("Refresh"), "edit[op]");
     $rows[] = array(
         l(check_output($feed->title), "node/view/$feed->nid", array("title" => t("View this news feed."))),
         $feed->numitems,
