@@ -7,7 +7,7 @@ function import_system($field) {
 }
 
 function import_perm() {
-  return array("access syndication", "administer syndication");
+  return array("access syndication");
 }
 
 function import_link($type, $node = 0, $main = 0) {
