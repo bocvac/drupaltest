@@ -121,7 +121,6 @@ function feed_update($node) {
 function feed_delete($node) {
   $result = db_query("SELECT * FROM item WHERE parent = '%d'", $node->nid);
 
-  // delete all item nodes attached to this feed
   while ($item = db_fetch_object($result)) {
     node_delete(array("nid" => $item->nid, "confirm" => 1));
   }
@@ -281,11 +280,6 @@ function feed_view($node, $main = 0) {
 
 function feed_refresh($feed) {
   $content = _feed_get($feed->url, $feed);
-  ob_start();
-  print_r($feed->taxonomy);
-  $taxo = ob_get_contents();
-  ob_end_clean();
-  watchdog("warning", "feed taxo : <pre>$taxo</pre>");
   if ($content != "") {
     $parser = new feedParser();
     $info = $parser->parseFeed($content);
@@ -325,8 +319,6 @@ function feed_cron() {
 }
 
 function feed_theme_pagefeed($node) {
-
-
   theme("node", $node, 1);
 }
 
@@ -388,6 +380,7 @@ function feed_page() {
 function feed_admin() {
   global $edit;
 
+  $edit = $_POST["edit"];
   $op = arg(2);
   $id = arg(3);
 
@@ -475,7 +468,7 @@ function feed_add_from_url($url) {
   }
 }
 
-function feed_admin_add_form() {
+function feed_admin_add_form($edit = array()) {
   if (!isset($edit["url"])) {
     $output = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
     $output .= form_submit(t("Add feed"));
