@@ -544,13 +544,9 @@ function feed_import($op) {
 // RSS parse functions
 
 function rss_date_utime($adate) {
-  $pattern = "/
-    ^(\d{4})-(\d{2})-(\d{2})
-    ([T\s]?(\d{2}):(\d{2}):?(\d{2})?\.?(\d{2})?
-     (Z|([\+\-]\d{2}):(\d{2}))?)?$
-    /xi";
+  $pattern = "/^(\d{4})-(\d{2})-(\d{2})([T\s]?(\d{2}):(\d{2}):?(\d{2})?\.?(\d{2})?(Z|([\+\-]\d{2}):(\d{2}))?)?$/xi";
 
-  if (!preg_match($pattern, $dcdate, $matches)) {
+  if (!preg_match($pattern, $adate, $matches)) {
     return strtotime($adate);
   }
 
