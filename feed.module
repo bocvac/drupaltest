@@ -1,9 +1,6 @@
 <?php
 // $Id$
 
-include_once("includes/xmlparser.inc");
-include_once("includes/feedparser.inc");
-
 function feed_system($field) {
   $system["description"] = t("Enables RSS feeds.");
   return $system[$field];
@@ -54,6 +51,10 @@ function feed_access($op, $node) {
 function feed_get_fields($op = '', $node = 0) {
   $fields =  array("creator", "last_mod", "etag", "items_promote");
 
+  if (module_exist("queue")) {
+    $fields[] = "items_moderate";
+  }
+  
   if (module_exist("comment")) {
     $fields[] = "items_comment";
   }
@@ -64,31 +65,23 @@ function feed_get_fields($op = '', $node = 0) {
 function feed_save($op, $node) {
   $save_fields = feed_get_fields($op, $node); // adjust to own needs
 
-  if ($op == "approve") {
-    return array("promote" => 1, "status" => 1);
-  }
-
   if ($op == "create") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link");
+      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link", "expire");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link");
+      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link", "expire");
     }
 
     return array_merge($main_fields, $save_fields);
   }
 
-  if ($op == "decline") {
-    return array("promote" => 0, "status" => 0);
-  }
-
   if ($op == "update") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link");
+      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link", "expire");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link");
+      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link", "expire");
     }
 
     return array_merge($main_fields, $save_fields);
@@ -109,19 +102,18 @@ function _feed_pack_fields($node) {
 function feed_insert($node) {
   $data = _feed_pack_fields($node);
 
-  db_query("INSERT INTO feed (nid, url, refresh, link, data) VALUES('%d', '%s', '%d', '%s', '%s')", $node->nid, $node->url, $node->refresh, $node->link, $data);
+  db_query("INSERT INTO feed (nid, url, refresh, link, expire, data) VALUES('%d', '%s', '%d', '%s', '%d', '%s')", $node->nid, $node->url, $node->refresh, $node->expire, $node->link, $data);
 }
 
 function feed_update($node) {
   $data = _feed_pack_fields($node);
 
-  db_query("UPDATE feed SET url = '%s', refresh = '%d', link = '%s', data = '%s' WHERE nid = '%d'", $node->url, $node->refresh, $node->link, $data, $node->nid);
+  db_query("UPDATE feed SET url = '%s', refresh = '%d', link = '%s', expire = '%d', data = '%s' WHERE nid = '%d'", $node->url, $node->refresh, $node->link, $node->expire, $data, $node->nid);
 }
 
 function feed_delete($node) {
   $result = db_query("SELECT * FROM item WHERE parent = '%d'", $node->nid);
 
-  // delete all item nodes attached to this feed
   while ($item = db_fetch_object($result)) {
     node_delete(array("nid" => $item->nid, "confirm" => 1));
   }
@@ -130,7 +122,7 @@ function feed_delete($node) {
 }
 
 function feed_load($node) {
-  $feed = db_fetch_object(db_query("SELECT url, refresh, link, data FROM feed WHERE nid = '%d'", $node->nid));
+  $feed = db_fetch_object(db_query("SELECT url, refresh, link, expire, data FROM feed WHERE nid = '%d'", $node->nid));
 
   $data = unserialize($feed->data);
 
@@ -199,6 +191,11 @@ function _feed_get($url, &$feed) {
 function feed_form_fields(&$node, &$help, &$error) {
   $output = form_select(t("Auto-promotion of news item is"), "items_promote", $node->items_promote, array(t("Disabled"), t("Enabled")));
 
+  if (module_exist("queue")) {
+    $output .= form_select(t("Moderation of news item"), "items_moderate", $node->items_moderate, array(("Disabled"), t("Enabled")));
+  }
+  
+
   if (module_exist("comment")) {
     $output .= form_select(t("Allow user comments on news items"), "items_comment", $node->items_comment, array(("Disabled"), t("Read only"), t("Read-write")));
   }
@@ -208,6 +205,7 @@ function feed_form_fields(&$node, &$help, &$error) {
 
 function feed_form(&$node, &$help, &$error) {
   global $edit;
+  $expires = array(0 => t("Never"), 604800 => t("One week"), 1209600 => t("Two weeks"), 2419200 => t("Four weeks"));
 
   $output = "";
 
@@ -219,6 +217,7 @@ function feed_form(&$node, &$help, &$error) {
   $output .= form_textfield(t("Site link"), "link", $node->link, 60, 255);
   $output .= form_textarea(t("Description"), "body", $node->body, 55, 10, t("Phrase or sentence describing the channel."));
   $output .= form_textfield(t("Update interval"), "refresh", $node->refresh, 10, 10, t("The refresh interval indicating how often you want to update this feed, in minutes.  Requires crontab."));
+  $output .= form_select(t("Items expire in"), "expire", $node->expire ? $node->expire : 0, $expires, t("Indicate wether items from this feed should be automatically deleted."));
 
   $output .= feed_form_fields($node, $help, $error);
 
@@ -242,9 +241,9 @@ function feed_link($type, $node = 0, $main = 0) {
 function feed_theme_header($node) {
 
 
-  $output = t("<p><b>Website:</b><div style=\"margin-left: 20px\"><a href=\"%url\" target=\"_blank\">%url</a></div></p>\n", array("%url" => $node->link));
-  $output .= t("<p><b>Description:</b><div style=\"margin-left: 20px\">%descr</div>\n", array("%descr" => check_output($node->body, 1)));
-  $output .= t("<p><b>Last update:</b><div style=\"margin-left: 20px\">%time ago</div></p>\n", array("%time" => format_interval(time() - $node->changed)));
+  $output = t("<p><b>Website:</b><div style=\"margin-left: 20px\"><a href=\"%url\" target=\"_blank\">%url</a></div></p><br />\n", array("%url" => $node->link));
+  $output .= t("<p><b>Description:</b><div style=\"margin-left: 20px\">%descr</div><br />\n", array("%descr" => check_output($node->body, 1)));
+  $output .= t("<p><b>Last update:</b><div style=\"margin-left: 20px\">%time ago</div></p><br />\n", array("%time" => format_interval(time() - $node->changed)));
   $output .= "<div align=\"right\"><a href=\"$node->url\"><img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" /></a></div>\n";
   $output .= "<div>". theme("links", link_node($node, 0)) ."</div>";
 
@@ -280,19 +279,17 @@ function feed_view($node, $main = 0) {
 }
 
 function feed_refresh($feed) {
-  $content = _feed_get($feed->url, $feed);
-  ob_start();
-  print_r($feed->taxonomy);
-  $taxo = ob_get_contents();
-  ob_end_clean();
-  watchdog("warning", "feed taxo : <pre>$taxo</pre>");
-  if ($content != "") {
-    $parser = new feedParser();
-    $info = $parser->parseFeed($content);
 
-    if (!isset($info["error"])) {
-      if ($info["item"]) { 
-        foreach (array_reverse($info["item"]) as $item) {
+  $content = _feed_get($feed->url, $feed);
+  if ($content != "") {
+    $info = rss_parse($content);
+
+    if (!$info) {
+      watchdog("error", "while updating ". $feed->title);
+    }
+    else {
+      if (isset($info->items)) { 
+        foreach (array_reverse($info->items) as $item) {
           item_parse($feed, $item);
         }
       }
@@ -301,9 +298,14 @@ function feed_refresh($feed) {
 
       node_submit($feed);
     }
-    else {
-      watchdog("error", "while updating ". $feed->title ." : ". $info["error"]);
-    }
+  }
+}
+
+function feed_expire($nid, $expire) {
+  $result = db_query("SELECT n.nid FROM item i, node n WHERE (i.nid = n.nid) AND (i.parent = %d) AND ((n.changed + %d) < %d) ORDER BY n.nid", $nid, $expire, time());
+
+  while ($item = db_fetch_object($result)) {
+    node_delete(array("nid" => $item->nid, "confirm" => 1));
   }
 }
 
@@ -321,12 +323,15 @@ function feed_cron() {
       feed_refresh(node_load(array("nid" => $feed->nid)));
     }
 
+    $result = db_query("SELECT n.nid, f.expire FROM node n, feed f WHERE (n.nid = f.nid) AND (n.status = 1) AND (f.expire > 0) ORDER BY n.nid");
+
+    while ($feed = db_fetch_object($result)) {
+      feed_expire($feed->nid, $feed->expire);
+    }
   } 
 }
 
 function feed_theme_pagefeed($node) {
-
-
   theme("node", $node, 1);
 }
 
@@ -388,6 +393,7 @@ function feed_page() {
 function feed_admin() {
   global $edit;
 
+  $edit = $_POST["edit"];
   $op = arg(2);
   $id = arg(3);
 
@@ -443,17 +449,16 @@ function feed_admin_overview() {
 function feed_add_from_url($url) {
   $tmp_feed = NULL;
   $content = _feed_get($url, $tmp_feed);
-  $parser = new feedParser();
-  $info = $parser->parseFeed($content);
+  $info = rss_parse($content);
 
-  if (isset($info["error"])) {
-    print "Error while parsing XML file " .  $info["error"];
+  if (!$info) {
+    watchdog("error", t("Error while parsing %url", array("%url" => $url)));
   }
   else {
-    $body = $info["channel"]["description"];
-    $created = $info["channel"]["lastbuilddate"] ? $info["channel"]["lastbuilddate"] : time();
-    $ttl = $info["channel"]["ttl"] ? $info["channel"]["ttl"] : 60;
-    $fields = array("type" => "feed", "title" => $info["channel"]["title"], "teaser" => $body, "body" => $body, "status" => 1, "moderate" => "0", "comment" => "0", "promote" => "0", "revision" => "0", "created" => $created, "url" => $url, "link" => $info["channel"]["link"], "items_comment" => "2", "items_promote" => "0", "refresh" => $ttl, "creator" => $info["channel"]["creator"]);
+    $body = $info->description;
+    $created = $info->lastBuildDate ? $info->lastBuildDate : time();
+    $ttl = $info->ttl ? $info->ttl : 60;
+    $fields = array("type" => "feed", "title" => $info->title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => "0", "comment" => "0", "promote" => "0", "revision" => "0", "created" => $created, "url" => $url, "link" => $info->link, "items_comment" => "2", "items_promote" => "0", "refresh" => $ttl, "creator" => $info->creator);
 
     $node = node_validate($fields, $error);
 
@@ -475,7 +480,7 @@ function feed_add_from_url($url) {
   }
 }
 
-function feed_admin_add_form() {
+function feed_admin_add_form($edit = array()) {
   if (!isset($edit["url"])) {
     $output = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
     $output .= form_submit(t("Add feed"));
@@ -518,4 +523,257 @@ function feed_import($op) {
     return $sources;
   }
 }
+
+// RSS parse functions
+
+function rss_dcdate_utime($dcdate,$cvttz = 0) {
+  list($date,$time) = explode("T",$dcdate);
+  preg_match("/([0-9]{2}:[0-9]{2}:[0-9]{2})(\-?\+?)([0-9]{2}):([0-9]{2})/", $time, $yo);
+
+  if ($cvttz == 1) {
+    return strtotime($date . " " . $yo[1] . $yo[2] . $yo[3] . $yo[4]);
+  } else {
+    return strtotime($date . " " . $yo[1]);
+  }
+}
+
+function rss_date_utime($adate, $cvttz = 0) {
+  $t = strtotime($adate);
+
+  if ($t == -1) {
+    $t = rss_dcdate_utime($adate, $cvttz);
+  }
+  
+  return $t;
+}
+
+function rss_xml_elemStart($parser, $tag, $attribs) {
+  global $rss;
+
+  switch ($tag) {
+    case "RSS":
+      $rss->_type = 0; // RSS 0.9x, RSS 2.0
+      break;
+    case "HTTP://WWW.W3.ORG/1999/02/22-RDF-SYNTAX-NS#:RDF":
+      $rss->_type = 1; // RSS 1.0
+      break;
+    case "HTTP://PURL.ORG/RSS/1.0/:CHANNEL":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:CHANNEL":
+    case "CHANNEL":
+      $rss->_section = "channel";
+      break;
+    case "HTTP://PURL.ORG/RSS/1.0/:ITEMS":
+    case "HTTP://PURL.ORG/RSS/1.0/:IMAGE":
+    case "HTTP://PURL.ORG/RSS/1.0/:TEXTINPUT":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:IMAGE":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:TEXTINPUT":
+    case "IMAGE":
+    case "TEXTINPUT":
+      unset($rss->_section);
+      break;
+    case "HTTP://PURL.ORG/RSS/1.0/:ITEM":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:ITEM":
+    case "ITEM":
+      $rss->_section = "item";
+      $rss->_item = array();
+      break;
+    default:
+      $rss->_currentTag = $tag;
+  }
+}
+
+function rss_xml_elemEnd($parser, $tag) {
+  global $rss;
+
+  if (isset($rss->_section) && ($rss->_section != "")) {
+    switch($tag) {
+      case "HTTP://PURL.ORG/RSS/1.0/:ITEM":
+      case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:ITEM":
+      case "ITEM":
+        unset($rss->_section);
+        if (isset($item["dc_date"]) && ($item["dc_date"] != "")) {
+          $item["date"] = $item["dc_date"];
+          unset($item["dc_date"]);
+        }
+        if (isset($rss->_item["date"])) {
+          $rss->_item["date"] = rss_date_utime($rss->_item["date"]);
+        }
+        $rss->items[] = $rss->_item;
+        unset($rss->_item);
+        break;
+    }
+  }
+  else {
+    switch ($tag) {
+      case "HTTP://PURL.ORG/RSS/1.0/:CHANNEL":
+      case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:CHANNEL":
+      case "CHANNEL":
+        if (isset($rss->dc_date) && ($rss->dc_date != "")) {
+          $rss->date = $rss->dc_date;
+          unset($rss->dc_date);
+        }
+        if (isset($rss->date)) {
+          $rss->date = rss_date_utime($rss->date);
+        }
+        if (isset($rss->lastBuildDate)) {
+          $rss->lastBuildDate = rss_date_utime($rss->lastBuildDate);
+        }
+        unset($rss->_section);
+        break;
+      case "HTTP://PURL.ORG/RSS/1.0/:IMAGE":
+      case "HTTP://PURL.ORG/RSS/1.0/:TEXTINPUT":
+      case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:IMAGE":
+      case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:TEXTINPUT":
+      case "IMAGE":
+      case "TEXTINPUT":
+        $rss->_section = "channel";
+        break;
+      case "HTTP://PURL.ORG/RSS/1.0/:ITEMS":
+        unset($rss->_section);
+        break;
+    }
+  }
+
+  unset($rss->_currentTag);
+}
+
+function rss_xml_cdata($parser, $data) {
+  global $rss;
+
+  if (isset($rss->_section) && ($rss->_section != "") && (isset($rss->_currentTag)) && ($rss->_currentTag != "") && ($data != "")) {
+    switch ($rss->_section) {
+      case "channel":
+        $tag = _rss_xml_channel_tagtr($rss->_currentTag);
+        if ($tag != "") {
+          $rss->$tag .= $data;
+        }
+        break;
+      case "item":
+        $tag = _rss_xml_item_tagtr($rss->_currentTag);
+        if ($tag != "") {
+          $rss->_item[$tag] .= $data;
+        }
+        break;
+    }
+  }
+}
+
+function _rss_xml_channel_tagtr($tag) {
+  switch ($tag) {
+    case "TITLE":
+    case "HTTP://PURL.ORG/RSS/1.0/:TITLE":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:TITLE":
+      return "title";
+      break;
+    case "LINK":
+    case "HTTP://PURL.ORG/RSS/1.0/:LINK":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:LINK":
+      return "link";
+      break;
+    case "DESCRIPTION":
+    case "HTTP://PURL.ORG/RSS/1.0/:DESCRIPTION":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:DESCRIPTION":
+      return "description";
+      break;
+    case "LANGUAGE":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:LANGUAGE":
+      return "language";
+      break;
+    case "COPYRIGHT":
+      return "copyright";
+      break;
+    case "MANAGINGEDITOR":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:PUBLISHER":
+      return "publisher";
+      break;
+    case "WEBMASTER":
+      return "creator";
+      break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:CREATOR":
+      return "dc_creator";
+      break;
+    case "PUBDATE":
+      return "date";
+      break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:DATE":
+      return "dc_date";
+      break;
+    case "LASTBUILDDATE":
+      return "lastBuildDate";
+      break;
+    case "GENERATOR":
+    case "HTTP://WEBNS.NET/MVCB/:GENERATORAGENT":
+      return "generator";
+      break;
+    case "TTL":
+      return "ttl";
+      break;
+    case "RATING":
+      return "rating";
+      break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:SUBJECT":
+      return "dc_subject";
+    default:
+      return "";
+  }
+}
+
+function _rss_xml_item_tagtr($tag) {
+  switch ($tag) {
+    case "TITLE":
+    case "HTTP://PURL.ORG/RSS/1.0/:TITLE":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:TITLE":
+      return "title";
+      break;
+    case "LINK":
+    case "HTTP://PURL.ORG/RSS/1.0/:LINK":
+    case "HTTP://MY.NETSCAPE.COM/RDF/SIMPLE/0.9:LINK":
+      return "link";
+      break;
+    case "DESCRIPTION":
+    case "HTTP://PURL.ORG/RSS/1.0/:DESCRIPTION":
+      return "description";
+      break;
+    case "AUTHOR":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:CREATOR":
+      return "creator";
+      break;
+    case "COMMENTS":
+      return "comments";
+      break;
+    case "GUID":
+      return "guid";
+      break;
+    case "PUBDATE":
+      return "date";
+      break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:DATE":
+      return "dc_date";
+      break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:SUBJECT":
+      return "dc_subject";
+      break;
+    default:
+      return "";
+  }
+}
+
+function rss_parse($text) {
+  global $rss;
+
+  $rss = new StdClass;
+
+  $parser = xml_parser_create_ns();
+  xml_set_element_handler($parser, "rss_xml_elemStart", "rss_xml_elemEnd");
+  xml_set_character_data_handler($parser, "rss_xml_cdata");
+  xml_parser_set_option($parser, XML_OPTION_TARGET_ENCODING, "utf-8");
+  if (!xml_parse($parser, $text, 1)) {
+    watchdog("error", t("failed to parse RSS feed : %error at line %line.", array("%error" => xml_error_string(xml_get_error_code($parser)), "%line" => xml_get_current_line_number($parser))));
+    return false;
+  }
+  xml_parser_free($parser);
+
+  return $rss;
+}
+
 ?>

@@ -41,31 +41,23 @@ function item_get_fieldnames($op = '', $node = 0) {
 function item_save($op, $node) {
   $save_fields = item_get_fieldnames($op, $node); // adjust to own needs
 
-  if ($op == "approve") {
-    return array("promote" => 1, "status" => 1);
-  }
-
   if ($op == "create") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "parent", "link", "guid", "weight");
+      $main_fields = array("body" => $node->body, "teaser" => $node->teaser, "parent", "link", "guid", "weight");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "parent", "link", "guid", "weight");
+      $main_fields = array("body" => $node->body, "teaser" => $node->teaser, "moderate" => "1", "promote" => 0, "parent", "link", "guid", "weight");
     }
 
     return array_merge($main_fields, $save_fields);
   }
 
-  if ($op == "decline") {
-    return array("promote" => 0, "status" => 0);
-  }
-
   if ($op == "update") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "parent", "link", "guid");
+      $main_fields = array("body" => $node->body, "teaser" => $node->teaser, "parent", "link", "guid");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "parent", "link", "guid");
+      $main_fields = array("body" => $node->body, "teaser" => $node->teaser, "moderate" => "1", "promote" => 0, "parent", "link", "guid");
     }
 
     return array_merge($main_fields, $save_fields);
@@ -169,12 +161,13 @@ function item_new($feed, $item) {
   $title = $item["title"] ? $item["title"] : $feed->title; 
   $guid = $item["guid"] ? $item["guid"] : "";
   $body = $item["description"] ? $item["description"] : "";
-  $created = $item["locdate"] ? $item["locdate"] : time();
+  $created = $item["date"] ? $item["date"] : time();
   $link = $item["link"] ? $item["link"] : $feed->link;
-  $weight = $item["locdate"] ? 0 : array_shift(db_fetch_array(db_query("SELECT MAX(weight)+1 AS newweight FROM item WHERE parent = '%s'", $feed->nid)));
-  $name = $item["author"] ? $item["author"] : $feed->creator;
+  $weight = $item["date"] ? 0 : array_shift(db_fetch_array(db_query("SELECT MAX(weight)+1 AS newweight FROM item WHERE parent = '%s'", $feed->nid)));
+  $name = $item["creator"] ? $item["creator"] : $feed->creator;
 
-  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => 0, "comment" => $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name, "taxonomy" => array_keys(taxonomy_node_get_terms($feed->nid)));
+  // automatically disable local commenting if the item already comes with a comments link
+  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => $feed->items_moderate, "comment" => $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name, "taxonomy" => array_keys(taxonomy_node_get_terms($feed->nid)));
   
   $node = node_validate($fields, $error);
 
@@ -183,12 +176,6 @@ function item_new($feed, $item) {
       $nid = node_save($node, array_merge($fields, module_invoke($node->type, "save", "create", $node)));
       if (!$nid) {
         watchdog("error", "could not create news item");
-      }
-      else {
-        $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
-        if (function_exists("taxonomy_node_save")) {
-          taxonomy_node_save($nid, $node->taxonomy);
-        }
       }
     }
     else {
@@ -233,22 +220,19 @@ function item_renew($feed, $node, $item) {
   $guid = $item["guid"] ? $item["guid"] : "";
   $body = $item["description"] ? $item["description"] : "";
   $link = $item["link"] ? $item["link"] : $feed->link;
-  $name = $item["author"] ? $item["author"] : $feed->creator;
+  $name = $item["creator"] ? $item["creator"] : $feed->creator;
 
   $node->title = $title; // don't really need to check since it's either different (need for update) or the same
   $node->guid = ($guid == "") ? $node->guid : $guid;
   $node->body = $body;
   $node->link = $link;
   $node->commentsurl = $item["comments"];
+  $node->comments = isset($item["comments"]) ? 0 : $node->comments;
   $node->name = $name;
 
   $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
 
   node_submit($node);
-  if (function_exists("taxonomy_node_save")) {
-    taxonomy_node_save($node->nid, $node->taxonomy);
-  }
-
 }
 
 // feed is *node*

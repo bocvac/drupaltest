@@ -1,3 +1,9 @@
  - the sy:* elements don't seem to be respected on all occasions
  - a better item-matching algorithm. It works well for feeds that have guids, but less for those feeds where both 
 <link> and <title> change (BlogDex for example)
+
+On the home page, I am sometimes getting 2 'read more' links which point to 
+different places. this looks awkward. One link points to a internal node/view page 
+and other to the source site. We should disable the node/view link in this case. alas, 
+this may require a change to node.module and I am searching 
+for a clean way to implement. Suggestions welcome.

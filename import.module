@@ -17,7 +17,8 @@ function import_link($type, $node = 0, $main = 0) {
     $links[] = l(t("latest news"), "import/", array("title" => t("Read the latest imported news.")));
     $links[] = l(t("news sources"), "import/sources", array("title" => t("View a list of all the websites we import news from.")));
     if (module_exist("taxonomy_dhtml")) {
-      $links[] = l(t("news categories"), "import/categories", array("title" => t("View a list of news categories.")));
+      $links[] = l(t("news by category"), "import/categories/item", array("title" => t("View a list of news items organized by category.")));
+      $links[] = l(t("news sources by category"), "import/categories/feed", array("title" => t("View a list of feeds organized by category.")));
     }
   }
 
@@ -54,10 +55,10 @@ function import_page_latest() {
 
 }
 
-function import_page_categories() {
+function import_categories($type) {
 
 
-  $boxes = taxonomy_dhtml_overview("feed");
+  $boxes = taxonomy_dhtml_overview($type);
   theme("header");
   import_menu();
   for ($n=0; $n < count($boxes); $n++) {
@@ -100,7 +101,7 @@ function import_menu() {
 function import_theme_menu($links) {
 
 
-  theme("box", t("news feeds"), "<div align=\"center\">". theme("links", $links) ."</div>");
+  theme("box", t("News feeds"), "<div align=\"center\">". theme("links", $links) ."</div>");
 }
 
 function import_page() {
@@ -113,7 +114,8 @@ function import_page() {
       import_page_sources();
       break;
     case "categories":
-      import_page_categories();
+      $type = arg(2);
+      import_categories($type);  
       break;  
     default:
       import_page_latest();

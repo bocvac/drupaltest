@@ -1,7 +1,15 @@
 README
 ========
-This is a new version of the import module that comes with Drupal. It needs to be tested and ironed out (see TODO file).
-Read the INSTALL file caefully, installation of this module is not trivial.
+This is a new version of the import module that comes with Drupal.
+Read the INSTALL file carefully, installation of this module is not trivial.
+
+The main advantage of the import module suite is that RSS items are stored as 
+first class nodes. That means that they can be promoted to home page, queued, commented upon, etc.
+
+Further, RSS item nodes inherit the taxonomy terms that are assigned 
+to their corrosponding feed. This rich tagging of items with taxonomy tags creates interesting
+opportunities for pages consisting of composite feeds from various sites and 
+even composite RSS feeds from multiple sites.
 
 FEATURES
 ==========
