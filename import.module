@@ -40,7 +40,7 @@ function import_page_latest() {
   $result = pager_query("SELECT nid FROM node WHERE nid IN (". implode(",", $nids) .") ORDER BY created DESC, nid DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0); 
 
   while ($import_node = db_fetch_object($result)) {
-    theme_invoke("import_theme_latestitem", node_load(array("nid" => $import_node->nid)));
+    theme("import_theme_latestitem", node_load(array("nid" => $import_node->nid)));
   }
 
   print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
@@ -66,7 +66,7 @@ function import_page_sources() {
   $result = pager_query("SELECT nid FROM node WHERE nid IN (". implode(",", $nids) .") ORDER BY title, nid", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   while ($import_source = db_fetch_object($result)) {
-    theme_invoke("import_theme_source", node_load(array("nid" => $import_source->nid)));
+    theme("import_theme_source", node_load(array("nid" => $import_source->nid)));
   }
 
   print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
@@ -76,7 +76,7 @@ function import_page_sources() {
 
 function import_menu() {
   $links = module_invoke_all("link", "import");
-  theme_invoke("import_theme_menu", $links);
+  theme("import_theme_menu", $links);
 }
 
 function import_theme_menu($links) {

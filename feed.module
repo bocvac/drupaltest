@@ -268,10 +268,10 @@ function feed_view($node, $main = 0) {
   else {
     $result = pager_query("SELECT n.nid FROM node n, item i WHERE (n.nid = i.nid) AND (n.status = 1) AND (parent = '". $node->nid ."') ORDER BY i.weight DESC, n.created DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-    theme_invoke("feed_theme_header", $node);
+    theme("feed_theme_header", $node);
 
     while ($item = db_fetch_object($result)) {
-      theme_invoke("feed_theme_item", node_load(array("nid" => $item->nid)));
+      theme("feed_theme_item", node_load(array("nid" => $item->nid)));
     }
 
     print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
@@ -332,7 +332,7 @@ function feed_page_feeds() {
   $theme->header();
 
   while ($node = db_fetch_object($result)) {
-    theme_invoke("feed_theme_pagefeed", node_load(array("nid" => $node->nid)));
+    theme("feed_theme_pagefeed", node_load(array("nid" => $node->nid)));
   }
 
   print "<div align=\"right\">". l("<img src=\"". $theme->image("xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "feed/feed", array("title" => t("See the exported news feeds in XML format."))) ."</div>\n";
