@@ -137,7 +137,7 @@ function item_view($node, $main = 0) {
     // prevent on-site read more link from appearing
     $node->body = $node->teaser;
   }
-  theme("node", $node, $main);
+  return theme("node", $node, $main);
 }
 
 function item_link($type, $node = 0, $main = 0) {
