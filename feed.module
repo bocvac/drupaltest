@@ -287,8 +287,10 @@ function feed_refresh($feed) {
     $info = $parser->parseFeed($content);
 
     if (!isset($info["error"])) {
-      foreach (array_reverse($info["item"]) as $item) {
-        item_parse($feed, $item);
+      if ($info["item"]) { 
+        foreach (array_reverse($info["item"]) as $item) {
+          item_parse($feed, $item);
+        }
       }
 
       $feed->changed = time();

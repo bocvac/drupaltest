@@ -15,8 +15,8 @@ CREATE TABLE feed (
   link varchar(255) NOT NULL default '',
   data text,
   PRIMARY KEY  (nid),
-  UNIQUE KEY link (link),
-  UNIQUE KEY url (url)
+  KEY link (link),
+  KEY url (url)
 ) TYPE=MyISAM;
 
 #
