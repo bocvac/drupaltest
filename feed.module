@@ -232,8 +232,8 @@ function feed_link($type, $node = 0, $main = 0) {
   }
 
   if (($type == "admin") && user_access("administer news feeds")) {
-    menu_add("admin/feed", "feed management", "node_admin", NULL, 8);
-    menu_add("admin/feed/help", "help");
+    menu("admin/feed", "feed management", "feed_admin", NULL, 8);
+    menu("admin/feed/help", "help", "feed_help", NULL, 10);
   }
 
   return $links ? $links : array();
@@ -428,6 +428,7 @@ function feed_get_feeds() {
 function feed_admin_overview() {
 //  global $edit;
 
+  feed_admin_add_form($edit);
   $header = array(t("title"), t("items"), t("last update"), array("data" => t("operations"), "colspan" => 2));
   $feeds = db_query("SELECT n.nid, n.title, n.changed, COUNT(i.nid) AS numitems, n.type FROM node n LEFT JOIN item i ON n.nid = i.parent GROUP BY n.nid HAVING n.type = \"feed\""); 
 
@@ -436,7 +437,6 @@ function feed_admin_overview() {
   }
 
   print table($header, $rows);
-  feed_admin_add_form($edit);
 
 }
 
@@ -475,7 +475,7 @@ function feed_add_from_url($url) {
   }
 }
 
-function feed_admin_add_form($edit) {
+function feed_admin_add_form() {
   if (!isset($edit["url"])) {
     $output = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
     $output .= form_submit(t("Add feed"));
