@@ -244,6 +244,7 @@ class feedParser {
 							$channel['description'] = $child['children'][0];
 							break;
 						case "RSS:WEBMASTER":
+						case "DC:CREATOR":
 							$channel['creator'] = $child['children'][0];
 							break;
 						case "DC:DATE":
@@ -304,6 +305,11 @@ class feedParser {
 						case "RSS:TTL":
 							$channel['ttl'] = $child['children'][0];
 							break;
+						case "UNDEF:MANAGINGEDITOR":
+						case "RSS:MANAGINGEDITOR":
+						case "DC:CREATOR":
+							$channel['creator'] = $child['children'][0];
+							break;
 						default:
 							break;
 					}
@@ -340,6 +346,8 @@ class feedParser {
 							$item["date"] = $this->convDate($child['children'][0],0);
 							$item["locdate"] = $this->convDate($child['children'][0],1);
 							break;
+						case "DC:CREATOR":
+							$item["author"] = $child['children'][0];
 						default:
 							break;
 					}
@@ -391,6 +399,12 @@ class feedParser {
 						case "UNDEF:COMMENTS":
 						case "RSS:COMMENTS":
 							$item["comments"] = $child['children'][0];
+							break;
+						case "UNDEF:AUTHOR":
+						case "RSS:AUTHOR":
+						case "DC:CREATOR":
+							$item["author"] = $child['children'][0];
+							break;
 						default:
 							break;
 					}

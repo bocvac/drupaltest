@@ -52,7 +52,7 @@ function feed_access($op, $node) {
 
 // future expansion
 function feed_get_fields($op = '', $node = 0) {
-  $fields =  array("last_mod", "etag", "items_promote");
+  $fields =  array("creator", "last_mod", "etag", "items_promote");
 
   if (module_exist("comment")) {
     $fields[] = "items_comment";
@@ -212,7 +212,7 @@ function feed_form(&$node, &$help, &$error) {
   $output = "";
 
   if (function_exists("taxonomy_node_form")) {
-    $output .= implode("", taxonomy_node_form("form", $node));
+    $output .= implode("", taxonomy_node_form("feed", $node));
   }
 
   $output .= form_textfield(t("Url"), "url", $node->url, 60, 255, t("The URL of the RSS feed."));
@@ -233,7 +233,7 @@ function feed_link($type, $node = 0, $main = 0) {
 
   if (($type == "admin") && user_access("administer news feeds")) {
     menu_add("feed management", url("admin/feed"), t("News feeds"), t("Display all news feeds."), "content management", 8);
-     menu_add("add new feed", url("admin/feed/add"), t("add new feed"), t("Add a news feed."), "feed management", 0, 1);
+//     menu_add("add new feed", url("admin/feed/add"), t("add new feed"), t("Add a news feed."), "feed management", 0, 1);
      menu_add("help", url("admin/feed/help"), t("help"), NULL, "feed management");
   }
 
@@ -286,8 +286,8 @@ function feed_refresh($feed) {
     $parser = new feedParser();
     $info = $parser->parseFeed($content);
 
-    if (!isset($info['error'])) {
-      foreach (array_reverse($info['item']) as $item) {
+    if (!isset($info["error"])) {
+      foreach (array_reverse($info["item"]) as $item) {
         item_parse($feed, $item);
       }
 
@@ -296,13 +296,18 @@ function feed_refresh($feed) {
       node_submit($feed);
     }
     else {
-      watchdog("error", "while updating ". $feed->title ." : ". $info['error']);
+      watchdog("error", "while updating ". $feed->title ." : ". $info["error"]);
     }
   }
 }
 
 function feed_cron() {
-  global $user;
+  global $user, $name, $passwd;
+
+  if ($name != "") {
+    $user = user_load(array("name" => $name, "pass" => $passwd, "status" => 1));
+  }
+
   if (user_access("administer news feeds")) {
     $result = db_query("SELECT n.nid AS nid FROM node n, feed f WHERE (n.nid = f.nid) AND (n.status = 1) AND ((n.changed + (f.refresh * 60)) < '%d')", time());
 
@@ -415,6 +420,8 @@ function feed_get_feeds() {
 }
 
 function feed_admin_overview() {
+//  global $edit;
+
   $header = array(t("title"), t("items"), t("last update"), array("data" => t("operations"), "colspan" => 2));
   $feeds = db_query("SELECT n.nid, n.title, n.changed, COUNT(i.nid) AS numitems, n.type FROM node n LEFT JOIN item i ON n.nid = i.parent GROUP BY n.nid HAVING n.type = \"feed\""); 
 
@@ -423,6 +430,8 @@ function feed_admin_overview() {
   }
 
   print table($header, $rows);
+  feed_admin_add_form($edit);
+
 }
 
 function feed_add_from_url($url) {
@@ -431,14 +440,14 @@ function feed_add_from_url($url) {
   $parser = new feedParser();
   $info = $parser->parseFeed($content);
 
-  if (isset($info['error'])) {
-    print "Error while parsing XML file " .  $info['error'];
+  if (isset($info["error"])) {
+    print "Error while parsing XML file " .  $info["error"];
   }
   else {
-    $body = $info['channel']['description'];
-    $created = $info['channel']['lastbuilddate'] ? $info['channel']['lastbuilddate'] : time();
-    $ttl = $info['channel']['ttl'] ? $info['channel']['ttl'] : 60;
-    $fields = array("type" => "feed", "title" => $info['channel']['title'], "teaser" => $body, "body" => $body, "status" => 1, "moderate" => "0", "comment" => "0", "promote" => "0", "revision" => "0", "created" => $created, "url" => $url, "link" => $info['channel']['link'], "items_comment" => "2", "items_promote" => "0", "refresh" => $ttl);
+    $body = $info["channel"]["description"];
+    $created = $info["channel"]["lastbuilddate"] ? $info["channel"]["lastbuilddate"] : time();
+    $ttl = $info["channel"]["ttl"] ? $info["channel"]["ttl"] : 60;
+    $fields = array("type" => "feed", "title" => $info["channel"]["title"], "teaser" => $body, "body" => $body, "status" => 1, "moderate" => "0", "comment" => "0", "promote" => "0", "revision" => "0", "created" => $created, "url" => $url, "link" => $info["channel"]["link"], "items_comment" => "2", "items_promote" => "0", "refresh" => $ttl, "creator" => $info["channel"]["creator"]);
 
     $node = node_validate($fields, $error);
 
@@ -464,7 +473,7 @@ function feed_admin_add_form($edit) {
   if (!isset($edit["url"])) {
     $output = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
     $output .= form_submit(t("Add feed"));
-    print form($output);
+    print form($output, "post", url("admin/feed/add"));
   }
   else {
      feed_add_from_url($edit["url"]);
@@ -487,10 +496,7 @@ function feed_block($op = "list", $delta = 0) {
       $feed = node_load(array("nid" => $nid));
       $items = db_query("SELECT n.nid, n.title FROM node n, item i WHERE (n.nid = i.nid) AND (i.parent = '%s') ORDER BY i.weight DESC, n.created DESC, n.title LIMIT 10", $nid);
       $block["subject"] = t($feed->title);
-      $block["content"] = "";
-      while ($item = db_fetch_object($items)) {
-        $block["content"] .= l($item->title, "node/view/$item->nid") . "<br />\n";
-      }
+      $block["content"] = node_title_list($items);
       $block["content"] .= "<div align=\"right\">". l(t("more"), "node/view/$nid") ."</div>\n";
     }
     return $block;

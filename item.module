@@ -35,7 +35,7 @@ function item_access($op, $node) {
 }
 
 function item_get_fieldnames($op = '', $node = 0) {
-  return array("commentsurl"); // for future extension
+  return array("commentsurl", "name"); // for future extension
 }
 
 function item_save($op, $node) {
@@ -166,19 +166,21 @@ function item_link($type, $node = 0, $main = 0) {
 function item_new($feed, $item) {
   global $user;
 
-  $title = $item['title'] ? $item['title'] : $feed->title; 
-  $guid = $item['guid'] ? $item['guid'] : "";
-  $body = $item['description'] ? $item['description'] : "";
-  $created = $item['locdate'] ? $item['locdate'] : time();
-  $link = $item['link'] ? $item['link'] : $feed->link;
-  $weight = $item['locdate'] ? 0 : array_shift(db_fetch_array(db_query("SELECT MAX(weight)+1 AS newweight FROM item WHERE parent = '%s'", $feed->nid)));
+  $title = $item["title"] ? $item["title"] : $feed->title; 
+  $guid = $item["guid"] ? $item["guid"] : "";
+  $body = $item["description"] ? $item["description"] : "";
+  $created = $item["locdate"] ? $item["locdate"] : time();
+  $link = $item["link"] ? $item["link"] : $feed->link;
+  $weight = $item["locdate"] ? 0 : array_shift(db_fetch_array(db_query("SELECT MAX(weight)+1 AS newweight FROM item WHERE parent = '%s'", $feed->nid)));
+  $name = $item["author"] ? $item["author"] : $feed->creator;
 
-  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => 0, "comment" => $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item['comments']);
+  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => 0, "comment" => $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name);
   
   $node = node_validate($fields, $error);
 
   if (!$node->error) {
     if (node_access("create", $node)) {
+      $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
       $nid = node_save($node, array_merge($fields, module_invoke($node->type, "save", "create", $node)));
       if (!$nid) {
         watchdog("error", "could not create news item");
@@ -198,10 +200,10 @@ function item_new($feed, $item) {
 function item_find($feed, $item) {
   global $user;
 
-  $title = substr($item['title'] ? $item['title'] : $feed->title, 0, 128); 
-  $guid = $item['guid'] ? $item['guid'] : "";
-  $body = filter($item['description'] ? $item['description'] : "");
-  $link = $item['link'] ? $item['link'] : $feed->link;
+  $title = substr($item["title"] ? $item["title"] : $feed->title, 0, 128); 
+  $guid = $item["guid"] ? $item["guid"] : "";
+  $body = filter($item["description"] ? $item["description"] : "");
+  $link = $item["link"] ? $item["link"] : $feed->link;
 
   if ($guid != "") {
     $result = db_query("SELECT n.nid FROM node n, item i WHERE (n.type = \"item\") AND (n.nid = i.nid) AND (i.parent = '%d') AND (i.guid = '%s')", $feed->nid, $guid);
@@ -222,16 +224,20 @@ function item_find($feed, $item) {
 function item_renew($feed, $node, $item) {
   global $user;
 
-  $title = $item['title'] ? $item['title'] : $feed->title;
-  $guid = $item['guid'] ? $item['guid'] : "";
-  $body = $item['description'] ? $item['description'] : "";
-  $link = $item['link'] ? $item['link'] : $feed->link;
+  $title = $item["title"] ? $item["title"] : $feed->title;
+  $guid = $item["guid"] ? $item["guid"] : "";
+  $body = $item["description"] ? $item["description"] : "";
+  $link = $item["link"] ? $item["link"] : $feed->link;
+  $name = $item["author"] ? $item["author"] : $feed->creator;
 
   $node->title = $title; // don't really need to check since it's either different (need for update) or the same
   $node->guid = ($guid == "") ? $node->guid : $guid;
   $node->body = $body;
   $node->link = $link;
-  $node->commentsurl = $item['comments'];
+  $node->commentsurl = $item["comments"];
+  $node->name = $name;
+
+  $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
 
   node_submit($node);
 }
