@@ -10,9 +10,7 @@ INSTALL
    mysql -p database <import.mysql
 4. Edit your .htacces. Put a # in fron of this line:
    php_value allow_call_time_pass_reference  Off
-5. Copy *.inc to the includes directory:
-   cp *.inc /my/drupal/dir/includes/
-6. Copy *.module to the modules directory:
+5. Copy *.module to the modules directory:
    cp *.module /my/drupal/dir/modules/
 6. Go to the admin section, then module selector and enable feed and item modules.
    The import module is optional.
@@ -29,10 +27,12 @@ INSTALL
    but I didn't get that to work -- the mozilla cookies.txt file is somewhere under ~/.mozilla.
    Use "find ~/.mozilla -name 'cookies.txt' -print" to find it.
 ).
-8. Add feeds
-9. Optionally tag feeds with taxonomy terms
-9. Activate taxonomy_dhtml.module and click on 'news categories' to see 
-news items grouped by taxonomy term (works best if you dedicate vocabulary(s) to the 'feed' node type)
+8. Add feeds in 'admin/feed'
+9. Optional. Tag feeds with taxonomy terms. All incoming RSS items inherit
+the same taxonomy terms as their corrosponding feed.
+10. Optional. Activate taxonomy_dhtml.module, browse to the import module main page, and 
+click on 'news categories' to see news items grouped by taxonomy term (works 
+best if you dedicate vocabulary(s) to the 'feed' node type)
 
 enjoy!
 
