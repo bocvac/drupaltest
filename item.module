@@ -164,7 +164,12 @@ function item_new($feed, $item) {
   $created = $item["date"] ? $item["date"] : time();
   $link = $item["link"] ? $item["link"] : $feed->link;
   $weight = $item["date"] ? 0 : array_shift(db_fetch_array(db_query("SELECT MAX(weight)+1 AS newweight FROM item WHERE parent = '%s'", $feed->nid)));
-  $name = $item["creator"] ? $item["creator"] : $feed->creator;
+  if ($item["creator"]) {
+    $name = $item["creator"];
+  }
+  else {
+    $name = $feed->creator ? $feed->creator : $feed->title;
+  }
 
   // automatically disable local commenting if the item already comes with a comments link
   $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => $feed->items_moderate, "comment" => $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name, "taxonomy" => array_keys(taxonomy_node_get_terms($feed->nid)));
@@ -220,7 +225,12 @@ function item_renew($feed, $node, $item) {
   $guid = $item["guid"] ? $item["guid"] : "";
   $body = $item["description"] ? $item["description"] : "";
   $link = $item["link"] ? $item["link"] : $feed->link;
-  $name = $item["creator"] ? $item["creator"] : $feed->creator;
+  if ($item["creator"]) {
+    $name = $item["creator"];
+  }
+  else {
+    $name = $feed->creator ? $feed->creator : $feed->title;
+  }
   
   // Only update the node if one of the node fields has changed in the RSS feed
   if (md5($node->title) != md5($title) || md5($node->body) != md5($body) || md5($node->link) != md5($link) || md5($node->name) != md5($name)) { // something has changed
