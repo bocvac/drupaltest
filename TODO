@@ -1,2 +1,1 @@
-+ There is a quirk with the RSS parser because it uses xml_parse_into_struct which has a faulty declaration. maybe 
-  writing a new parser. This is not really high prioritized.
+Move logic from _save() to _validate() in feed annd item modules.

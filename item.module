@@ -41,10 +41,6 @@ function item_get_fieldnames($op = '', $node = 0) {
 function item_save($op, $node) {
   $save_fields = item_get_fieldnames($op, $node); // adjust to own needs
 
-  if ($op == "approve") {
-    return array("promote" => 1, "status" => 1);
-  }
-
   if ($op == "create") {
     if (user_access("administer news feeds")) {
       $main_fields = array("body" => $node->body, "teaser" => $node->teaser, "parent", "link", "guid", "weight");
@@ -54,10 +50,6 @@ function item_save($op, $node) {
     }
 
     return array_merge($main_fields, $save_fields);
-  }
-
-  if ($op == "decline") {
-    return array("promote" => 0, "status" => 0);
   }
 
   if ($op == "update") {

@@ -61,10 +61,6 @@ function feed_get_fields($op = '', $node = 0) {
 function feed_save($op, $node) {
   $save_fields = feed_get_fields($op, $node); // adjust to own needs
 
-  if ($op == "approve") {
-    return array("promote" => 1, "status" => 1);
-  }
-
   if ($op == "create") {
     if (user_access("administer news feeds")) {
       $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link");
@@ -74,10 +70,6 @@ function feed_save($op, $node) {
     }
 
     return array_merge($main_fields, $save_fields);
-  }
-
-  if ($op == "decline") {
-    return array("promote" => 0, "status" => 0);
   }
 
   if ($op == "update") {
