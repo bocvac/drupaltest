@@ -1,0 +1,3 @@
+ - the sy:* elements don't seem to be respected on all occasions
+ - a better item-matching algorithm. It works well for feeds that have guids, but less for those feeds where both 
+<link> and <title> change (BlogDex for example)

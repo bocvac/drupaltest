@@ -1,0 +1,14 @@
+README
+========
+This is a new version of the import module that comes with Drupal. It needs to be tested and ironed out (see TODO file).
+Read the INSTALL file caefully, installation of this module is not trivial.
+
+FEATURES
+==========
+ - Reads RSS 0.9x, 1.0 and 2.0 files
+ - a block for each feed
+ - (optional) auto-promotion of news items
+
+BUGS, COMMENTS, QUESTIONS ETC.
+================================
+Please send to breyten@dataloss.nl/breyten@useful.dataloss.nl

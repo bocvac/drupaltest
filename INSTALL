@@ -1,0 +1,32 @@
+INSTALL
+=========
+1. Delete the import.module from your drupal installation:
+   rm /my/drupal/dir/modules/import.module
+2. Drop the tables in mysql:
+   DROP TABLE item;
+   DROP TABLE feed;
+   DROP TABLE bundle;
+3. install the new tables:
+   mysql -p database <import.mysql
+4. Edit your .htacces. Put a # in fron of this line:
+   php_value allow_call_time_pass_reference  Off
+5. Copy *.inc to the includes directory:
+   cp *.inc /my/drupal/dir/includes/
+6. Copy *.module to the modules directory:
+   cp *.module /my/drupal/dir/modules/
+6. Go to the admin section, then module selector and enable feed and item modules.
+   The import module is optional.
+7. For the cron the work you must run cron.php as a user with the right permissions.
+   (I created a user cron on my site to do this). Minimun should be access news feeds
+   and administer news feeds. You can use Mozilla/Netscape to login as that user (remember
+   to check 'remember me'). Then you can use curl like this: 
+   /usr/bin/curl -s --cookie /home/breyten/.mozilla/default/65frxpvt.slt/cookies.txt -o /dev/null "http://example.com/cron.php"
+   (Note: according to the documentation wget can also work with mozilla cookie files,
+   but I didn't get that to work -- the mozilla cookies.txt file is somewhere under ~/.mozilla.
+   Use "find ~/.mozilla -name 'cookies.txt' -print" to find it.
+).
+8. Add feeds
+
+enjoy!
+
+breyten@dataloss.nl

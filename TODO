@@ -1,0 +1,5 @@
++ Something with auto-setting taxonomy terms for the items that belong to a feed. I'm not sure what would be the right 
+  way to do this.
++ Bundles. See above. Once we get the taxo to work good bundles should be easy.
++ There is a quirk with the RSS parser because it uses xml_parse_into_struct which has a faulty declaration. maybe 
+  writing a new parser. This is not really high prioritized.

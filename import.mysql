@@ -1,0 +1,50 @@
+# MySQL dump 8.16
+#
+# Host: localhost    Database: breyten
+#--------------------------------------------------------
+# Server version	3.23.54
+
+#
+# Table structure for table 'feed'
+#
+
+CREATE TABLE feed (
+  nid int(10) unsigned NOT NULL default '0',
+  url varchar(255) NOT NULL default '',
+  refresh int(10) NOT NULL default '0',
+  link varchar(255) NOT NULL default '',
+  data text,
+  PRIMARY KEY  (nid),
+  UNIQUE KEY link (link),
+  UNIQUE KEY url (url)
+) TYPE=MyISAM;
+
+#
+# Dumping data for table 'feed'
+#
+
+# MySQL dump 8.16
+#
+# Host: localhost    Database: breyten
+#--------------------------------------------------------
+# Server version	3.23.54
+
+#
+# Table structure for table 'item'
+#
+
+CREATE TABLE item (
+  nid int(10) unsigned NOT NULL default '0',
+  parent int(10) unsigned NOT NULL default '0',
+  weight int(10) unsigned NOT NULL default '0',
+  link varchar(255) default '',
+  guid varchar(255) default '',
+  data text,
+  PRIMARY KEY  (nid,parent),
+  KEY link (link),
+  KEY guid (guid)
+) TYPE=MyISAM;
+
+#
+# Dumping data for table 'item'
+#
