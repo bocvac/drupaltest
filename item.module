@@ -62,10 +62,10 @@ function item_save($op, $node) {
 
   if ($op == "update") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "parent", "link", "guid");
+      $main_fields = array("body" => $node->body, "teaser" => $node->teaser, "parent", "link", "guid");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "parent", "link", "guid");
+      $main_fields = array("body" => $node->body, "teaser" => $node->teaser, "moderate" => "1", "promote" => 0, "parent", "link", "guid");
     }
 
     return array_merge($main_fields, $save_fields);
