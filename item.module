@@ -132,6 +132,14 @@ function item_form(&$node, &$help, &$error) {
   return $output;
 }
 
+function item_view($node, $main = 0) {
+  if ($main) {
+    // prevent on-site read more link from appearing
+    $node->body = $node->teaser;
+  }
+  theme("node", $node, $main);
+}
+
 function item_link($type, $node = 0, $main = 0) {
   global $user;
 
