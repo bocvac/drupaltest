@@ -8,6 +8,7 @@ FEATURES
  - Reads RSS 0.9x, 1.0 and 2.0 files
  - a block for each feed
  - (optional) auto-promotion of news items
+ - when taxonomy_dhtml.module is enabled (see Contrib repository), offers a page grouping similarly tagged items  
 
 BUGS, COMMENTS, QUESTIONS ETC.
 ================================

@@ -30,6 +30,9 @@ INSTALL
    Use "find ~/.mozilla -name 'cookies.txt' -print" to find it.
 ).
 8. Add feeds
+9. Optionally tag feeds with taxonomy terms
+9. Activate taxonomy_dhtml.module and click on 'news categories' to see 
+news items grouped by taxonomy term (works best if you dedicate vocabulary(s) to the 'feed' node type)
 
 enjoy!
 

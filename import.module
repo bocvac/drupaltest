@@ -1,10 +1,12 @@
 <?php
 // $Id$
 
+
 function import_system($field) {
   $system["description"] = t("The import module is a central place where all imported content comes together.");
   return $system[$field];
 }
+
 
 function import_perm() {
   return array("access import");
@@ -14,6 +16,9 @@ function import_link($type, $node = 0, $main = 0) {
   if ($type == "import") {
     $links[] = l(t("latest news"), "import/", array("title" => t("Read the latest imported news.")));
     $links[] = l(t("news sources"), "import/sources", array("title" => t("View a list of all the websites we import news from.")));
+    if (module_exist("taxonomy_dhtml")) {
+      $links[] = l(t("news categories"), "import/categories", array("title" => t("View a list of news categories.")));
+    }
   }
 
   if (($type == "page") && (user_access("access import"))) {
@@ -45,6 +50,19 @@ function import_page_latest() {
 
   print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
+  $theme->footer();
+
+}
+
+function import_page_categories() {
+  global $theme;
+
+  $boxes = taxonomy_dhtml_overview("feed");
+  $theme->header();
+  import_menu();
+  for ($n=0; $n < count($boxes); $n++) {
+    $theme->box($boxes[$n]["subject"], $boxes[$n]["content"]);
+  }
   $theme->footer();
 
 }
@@ -94,6 +112,9 @@ function import_page() {
     case "sources":
       import_page_sources();
       break;
+    case "categories":
+      import_page_categories();
+      break;  
     default:
       import_page_latest();
   }
