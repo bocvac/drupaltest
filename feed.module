@@ -568,6 +568,10 @@ function rss_xml_elemEnd($parser, $tag) {
       case "HTTP://PURL.ORG/RSS/1.0/:ITEM":
       case "ITEM":
         unset($rss->_section);
+        if (isset($item["dc_date"]) && ($item["dc_date"] != "")) {
+          $item["date"] = $item["dc_date"];
+          unset($item["dc_date"]);
+        }
         if (isset($rss->_item["date"])) {
           $rss->_item["date"] = rss_date_utime($rss->_item["date"]);
         }
@@ -580,6 +584,10 @@ function rss_xml_elemEnd($parser, $tag) {
     switch ($tag) {
       case "HTTP://PURL.ORG/RSS/1.0/:CHANNEL":
       case "CHANNEL":
+        if (isset($rss->dc_date) && ($rss->dc_date != "")) {
+          $rss->date = $rss->dc_date;
+          unset($rss->dc_date);
+        }
         if (isset($rss->date)) {
           $rss->date = rss_date_utime($rss->date);
         }
@@ -589,6 +597,7 @@ function rss_xml_elemEnd($parser, $tag) {
         unset($rss->_section);
         break;
       case "HTTP://PURL.ORG/RSS/1.0/:IMAGE":
+      case "HTTP://PURL.ORG/RSS/1.0/:TEXTINPUT":
       case "IMAGE":
       case "TEXTINPUT":
         $rss->_section = "channel";
@@ -626,7 +635,6 @@ function rss_xml_cdata($parser, $data) {
 function _rss_xml_channel_tagtr($tag) {
   switch ($tag) {
     case "TITLE":
-    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:SUBJECT":
     case "HTTP://PURL.ORG/RSS/1.0/:TITLE":
       return "title";
       break;
@@ -650,12 +658,16 @@ function _rss_xml_channel_tagtr($tag) {
       return "publisher";
       break;
     case "WEBMASTER":
-    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:CREATOR":
       return "creator";
       break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:CREATOR":
+      return "dc_creator";
+      break;
     case "PUBDATE":
-    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:DATE":
       return "date";
+      break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:DATE":
+      return "dc_date";
       break;
     case "LASTBUILDDATE":
       return "lastBuildDate";
@@ -670,6 +682,8 @@ function _rss_xml_channel_tagtr($tag) {
     case "RATING":
       return "rating";
       break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:SUBJECT":
+      return "dc_subject";
     default:
       return "";
   }
@@ -678,7 +692,6 @@ function _rss_xml_channel_tagtr($tag) {
 function _rss_xml_item_tagtr($tag) {
   switch ($tag) {
     case "TITLE":
-    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:SUBJECT":
     case "HTTP://PURL.ORG/RSS/1.0/:TITLE":
       return "title";
       break;
@@ -701,8 +714,13 @@ function _rss_xml_item_tagtr($tag) {
       return "guid";
       break;
     case "PUBDATE":
-    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:DATE":
       return "date";
+      break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:DATE":
+      return "dc_date";
+      break;
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:SUBJECT":
+      return "dc_subject";
       break;
     default:
       return "";
