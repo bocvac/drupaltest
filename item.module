@@ -178,7 +178,7 @@ function item_new($feed, $item) {
   $body = $item["description"] ? $item["description"] : "";
   $created = $item["date"] ? $item["date"] : time();
   $link = $item["link"] ? $item["link"] : $feed->link;
-  $weight = $item["date"] ? 0 : array_shift(db_fetch_array(db_query("SELECT MAX(weight)+1 AS newweight FROM item WHERE parent = '%s'", $feed->nid)));
+  $weight = $item["date"] ? 0 : array_shift(db_fetch_array(db_query("SELECT MAX(weight)+1 AS newweight FROM {item} WHERE parent = '%s'", $feed->nid)));
   if ($item["creator"]) {
     $name = $item["creator"];
   }

@@ -89,10 +89,10 @@ function feed_save($op, $node) {
 
   if ($op == "create") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link", "expire");
+      $main_fields = array("body" =>  check_output($node->body), "teaser" =>  check_output($node->teaser), "url", "refresh", "link", "expire");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link", "expire");
+      $main_fields = array("body" =>  check_output($node->body), "teaser" =>  check_output($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link", "expire");
     }
 
     return array_merge($main_fields, $save_fields);
@@ -100,10 +100,10 @@ function feed_save($op, $node) {
 
   if ($op == "update") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link", "expire");
+      $main_fields = array("body" =>  check_output($node->body), "teaser" =>  check_output($node->teaser), "url", "refresh", "link", "expire");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link", "expire");
+      $main_fields = array("body" =>  check_output($node->body), "teaser" =>  check_output($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link", "expire");
     }
 
     return array_merge($main_fields, $save_fields);
