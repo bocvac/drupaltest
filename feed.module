@@ -413,8 +413,25 @@ function feed_admin() {
           $output = feed_refresh(node_load(array("nid" => $edit["nid"])));
           break;
       }
-      $output .= feed_admin_add_form($edit);
-      $output .= feed_admin_overview();
+      $add_form = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
+      $add_form .= form_checkbox(t("Automatically refresh"), "update", $edit["update"], 1);
+      $add_form .= form_submit(t("Add feed"), "edit[op]");
+      $output .= form($add_form, "post", url("admin/system/feeds"));
+
+      $header = array(t("title"), t("items"), t("last update"), array("data" => t("operations"), "colspan" => 2));
+      $feeds = db_query("SELECT n.nid, n.title, n.changed, COUNT(i.nid) AS numitems, n.type FROM {node} n LEFT JOIN {item} i ON n.nid = i.parent GROUP BY n.nid HAVING n.type = \"feed\""); 
+      while ($feed = db_fetch_object($feeds)) {
+        $refresh = form_hidden("nid", "$feed->nid");
+        $refresh .= form_submit(t("Refresh"), "edit[op]");
+        $rows[] = array(
+            l(check_output($feed->title), "node/view/$feed->nid", array("title" => t("View this news feed."))),
+            $feed->numitems,
+            format_interval(time() - $feed->changed),
+            l(t("administer"), "admin/node/edit/$feed->nid", array("title" => t("administer this news feed."))),
+            form($refresh, "post", "admin/system/feeds")
+            );
+      }
+      $output .= table($header, $rows);
     }
   }
   else {
@@ -433,27 +450,6 @@ function feed_get_feeds() {
   }
 
   return $nodes;
-}
-
-function feed_admin_overview() {
-  $header = array(t("title"), t("items"), t("last update"), array("data" => t("operations"), "colspan" => 2));
-  $feeds = db_query("SELECT n.nid, n.title, n.changed, COUNT(i.nid) AS numitems, n.type FROM {node} n LEFT JOIN {item} i ON n.nid = i.parent GROUP BY n.nid HAVING n.type = \"feed\""); 
-
-  while ($feed = db_fetch_object($feeds)) {
-    $refresh = form_hidden("nid", "$feed->nid");
-    $refresh .= form_submit(t("Refresh"), "edit[op]");
-    $rows[] = array(
-        l(check_output($feed->title), "node/view/$feed->nid", array("title" => t("View this news feed."))),
-        $feed->numitems,
-        format_interval(time() - $feed->changed),
-        l(t("administer"), "admin/node/edit/$feed->nid", array("title" => t("administer this news feed."))),
-        form($refresh, "post", "admin/system/feeds")
-        );
-  }
-
-  $output .= table($header, $rows);
-  return $output;
-
 }
 
 function feed_add_from_url($url) {
@@ -505,13 +501,6 @@ function feed_add_from_url($url) {
  
   }
   return $output;
-}
-
-function feed_admin_add_form($edit = array()) {
-  $output = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
-  $output .= form_checkbox(t("Automatically refresh"), "update", $edit["update"], 1);
-  $output .= form_submit(t("Add feed"), "edit[op]");
-  return form($output, "post", url("admin/system/feeds"));
 }
 
 function feed_block($op = "list", $delta = 0) {
