@@ -14,19 +14,8 @@ INSTALL
    cp *.module /my/drupal/dir/modules/
 6. Go to the admin section, then module selector and enable feed and item modules.
    The import module is optional.
-7. For the cron the work you must run cron.php as a user with the right permissions.
-   (I created a user cron on my site to do this). Minimum should be access news feeds
-   and administer news feeds.
-   You can do this in two way. The first way is the less secure one. Call cron.php like this:
-   http://example.com/cron.php?name=username&passwd=password
-   The second version is more secure, but requires more work from your side.
-   You can use Mozilla/Netscape to login as the user you wany (remember
-   to check 'remember me'). Then you can use curl like this: 
-   /usr/bin/curl -s --cookie /home/breyten/.mozilla/default/65frxpvt.slt/cookies.txt -o /dev/null "http://example.com/cron.php"
-   (Note: according to the documentation wget can also work with mozilla cookie files,
-   but I didn't get that to work -- the mozilla cookies.txt file is somewhere under ~/.mozilla.
-   Use "find ~/.mozilla -name 'cookies.txt' -print" to find it.
-).
+7. Ensure cron is being called by either by your platform's cron facility or the poormanscron module.
+   See cron instructions at http://drupal.org/book/view/288
 8. Add feeds in 'admin/feed'
 9. Optional. Tag feeds with taxonomy terms. All incoming RSS items inherit
 the same taxonomy terms as their corrosponding feed.

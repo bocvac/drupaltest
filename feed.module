@@ -317,25 +317,24 @@ function feed_expire($nid, $expire) {
 }
 
 function feed_cron() {
-  global $user, $name, $passwd;
+  global $user;
 
-  if ($name != "") {
-    $user = user_load(array("name" => $name, "pass" => $passwd, "status" => 1));
+  $uid = $user->uid;
+  $user->uid = 1;
+
+  $result = db_query("SELECT n.nid AS nid FROM {node} n, {feed} f WHERE (n.nid = f.nid) AND (n.status = 1) AND ((n.changed + (f.refresh * 60)) < '%d')", time());
+
+  while ($feed = db_fetch_object($result)) {
+    feed_refresh(node_load(array("nid" => $feed->nid)));
   }
 
-  if (user_access("administer news feeds")) {
-    $result = db_query("SELECT n.nid AS nid FROM {node} n, {feed} f WHERE (n.nid = f.nid) AND (n.status = 1) AND ((n.changed + (f.refresh * 60)) < '%d')", time());
+  $result = db_query("SELECT n.nid, f.expire FROM {node} n, {feed} f WHERE (n.nid = f.nid) AND (n.status = 1) AND (f.expire > 0) ORDER BY n.nid");
 
-    while ($feed = db_fetch_object($result)) {
-      feed_refresh(node_load(array("nid" => $feed->nid)));
-    }
+  while ($feed = db_fetch_object($result)) {
+    feed_expire($feed->nid, $feed->expire);
+  }
 
-    $result = db_query("SELECT n.nid, f.expire FROM {node} n, {feed} f WHERE (n.nid = f.nid) AND (n.status = 1) AND (f.expire > 0) ORDER BY n.nid");
-
-    while ($feed = db_fetch_object($result)) {
-      feed_expire($feed->nid, $feed->expire);
-    }
-  } 
+  $user->uid = $uid;
 }
 
 function theme_feed_pagefeed($node) {
