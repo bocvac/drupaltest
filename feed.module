@@ -408,7 +408,7 @@ function feed_admin() {
     else {
       switch ($edit["op"]) {
         case t("Add feed"):
-          feed_add_from_url($edit["url"], $edit["update"]);
+          feed_add_from_url($edit["url"], $edit["taxonomy"], $edit["update"]);
           break;
         case t("Refresh"):
           feed_refresh(node_load(array("nid" => $edit["nid"])));
@@ -416,6 +416,9 @@ function feed_admin() {
       }
       $add_form = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
       $add_form .= form_checkbox(t("Automatically refresh"), "update", 1, 1);
+      if (function_exists("taxonomy_node_form")) {
+        $add_form .= implode("", taxonomy_node_form("feed", $node));
+      }
       $add_form .= form_submit(t("Add feed"), "edit[op]");
       $output .= form($add_form, "post", url("admin/system/feeds"));
 
@@ -453,7 +456,7 @@ function feed_get_feeds() {
   return $nodes;
 }
 
-function feed_add_from_url($url, $refresh = 0) {
+function feed_add_from_url($url, $taxonomy, $refresh = 0) {
   $tmp_feed = NULL;
   $content = _feed_get($url, $tmp_feed);
   $info = rss_parse($content);
@@ -489,6 +492,9 @@ function feed_add_from_url($url, $refresh = 0) {
       if (node_access("create", $node)) {
         $nid = node_save($node, array_merge($fields, module_invoke($node->type, "save", "create", $node)));
         if ($nid) {
+          if (function_exists("taxonomy_node_save")) {
+            taxonomy_node_save($nid, $taxonomy);
+          }
           if ($refresh) {
             feed_refresh(node_load(array("nid" => $nid)));
           }
@@ -545,11 +551,7 @@ function feed_import($op) {
 // RSS parse functions
 
 function rss_date_utime($adate) {
-  $pattern = "/
-    ^(\d{4})-(\d{2})-(\d{2})
-    ([T\s]?(\d{2}):(\d{2}):?(\d{2})?\.?(\d{2})?
-     (Z|([\+\-]\d{2}):(\d{2}))?)?$
-    /xi";
+  $pattern = "/^(\d{4})-(\d{2})-(\d{2})([T\s]?(\d{2}):(\d{2}):?(\d{2})?\.?(\d{2})?(Z|([\+\-]\d{2}):(\d{2}))?)?$/xi";
 
   if (!preg_match($pattern, $adate, $matches)) {
     return strtotime($adate);
