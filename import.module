@@ -38,7 +38,7 @@ function import_theme_latestitem($node) {
 function import_page_latest() {
 
 
-  print theme("header");
+  print theme("header", t("Latest news"));
 
   import_menu();
 
@@ -59,7 +59,7 @@ function import_categories($type) {
 
 
   $boxes = taxonomy_dhtml_overview($type);
-  print theme("header");
+  print theme("header", ($type == "item" ? t("News by category") : t("News sources by category")));
   import_menu();
   for ($n=0; $n < count($boxes); $n++) {
     print theme("box", $boxes[$n]["subject"], $boxes[$n]["content"]);
@@ -77,7 +77,7 @@ function import_theme_source($node) {
 function import_page_sources() {
 
 
-  print theme("header");
+  print theme("header", t("News sources"));
 
   import_menu();
 
