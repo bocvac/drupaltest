@@ -13,14 +13,16 @@ function feed_node($field) {
   return $info[$field];
 }
 
-function feed_help($section = "admin/system/feeds/help") {
+function feed_help($section = "admin/system/feeds") {
   switch ($section) {
-    case 'admin/system/feeds/help':
+    case "admin/system/feeds":
       $output = "<p>In Drupal you have <i>feeds</i>.   Feeds define news sources.</p>";
       $output .= "<p>You can have several providers of news feeds.  You can add a feed by clicking the \"add feed\" link on the import administration pages. Simply supply the URI.  You have just defined your first feed.  If you have more feeds repeat as necessary.</p>";
       $output .= "<p>To verify whether your feed works, press \"refresh\" at the overview page.  The number of news items that have been sucessfully fetched, should then become visible in the second column of the feed overview.</p>";
       $output .="<p>Your newly created feed(s) will now show up in the list of blocks that you can see at the block related administration pages.  There you can customize where and when your feed(s) will be displayed.</p>";
       break;
+    case "admin/system/modules/feed":
+      $output .= "<p>These are the <b>default</b> settings for new feeds added via the ". l("feed administration page", "admin/system/feeds") .". Set up your feed preferences properly here before you add feeds.</p>";
   }
 
   return $output;
@@ -49,6 +51,21 @@ function feed_access($op, $node) {
     return user_access("administer news feeds");
   }
 
+}
+
+function feed_settings() {
+  $expires = array(0 => t("Never"), 604800 => t("One week"), 1209600 => t("Two weeks"), 2419200 => t("Four weeks"),7257600 => t("3 Months"),14515200 =>t("6 Months"),31449600 => t("One Year"));
+
+  $output .= form_textfield(t("Update interval"), "feed_refresh", variable_get("feed_refresh", "60"), 10, 10, t("The refresh interval indicating how often you want to update this feed, in minutes.  Requires crontab."));
+  $output .= form_select(t("Items expire in"), "feed_expire", variable_get("feed_expire", "2419200"), $expires, t("Indicate wether items from this feed should be automatically deleted."));
+  $output .= form_select(t("Auto-promotion of news item is"), "feed_items_promote", variable_get("feed_items_promote", "0"), array(t("Disabled"), t("Enabled")));
+  if (module_exist("queue")) {
+    $output .= form_select(t("Moderation of news item"), "feed_items_moderate", variable_get("feed_items_moderate", "0"), array(("Disabled"), t("Enabled")));
+  }
+  if (module_exist("comment")) {
+    $output .= form_select(t("Allow user comments on news items"), "feed_items_comment", variable_get("feed_items_comment", "0"), array(("Disabled"), t("Read only"), t("Read-write")));
+  }
+  return $output;
 }
 
 // future expansion
@@ -192,21 +209,6 @@ function _feed_get($url, &$feed) {
   return $data;
 }
 
-function feed_form_fields(&$node, &$help, &$error) {
-  $output = form_select(t("Auto-promotion of news item is"), "items_promote", $node->items_promote, array(t("Disabled"), t("Enabled")));
-
-  if (module_exist("queue")) {
-    $output .= form_select(t("Moderation of news item"), "items_moderate", $node->items_moderate, array(("Disabled"), t("Enabled")));
-  }
-  
-
-  if (module_exist("comment")) {
-    $output .= form_select(t("Allow user comments on news items"), "items_comment", $node->items_comment, array(("Disabled"), t("Read only"), t("Read-write")));
-  }
-
-  return $output;
-}
-
 function feed_form(&$node, &$help, &$error) {
   global $edit;
   $expires = array(0 => t("Never"), 604800 => t("One week"), 1209600 => t("Two weeks"), 2419200 => t("Four weeks"),7257600 => t("3 Months"),14515200 =>t("6 Months"),31449600 => t("One Year"));
@@ -216,14 +218,18 @@ function feed_form(&$node, &$help, &$error) {
   if (function_exists("taxonomy_node_form")) {
     $output .= implode("", taxonomy_node_form("feed", $node));
   }
-
   $output .= form_textfield(t("Url"), "url", $node->url, 60, 255, t("The URL of the RSS feed."));
   $output .= form_textfield(t("Site link"), "link", $node->link, 60, 255);
   $output .= form_textarea(t("Description"), "body", $node->body, 55, 10, t("Phrase or sentence describing the channel."));
   $output .= form_textfield(t("Update interval"), "refresh", $node->refresh, 10, 10, t("The refresh interval indicating how often you want to update this feed, in minutes.  Requires crontab."));
   $output .= form_select(t("Items expire in"), "expire", $node->expire ? $node->expire : 0, $expires, t("Indicate wether items from this feed should be automatically deleted."));
-
-  $output .= feed_form_fields($node, $help, $error);
+  $output .= form_select(t("Auto-promotion of news item is"), "items_promote", $node->items_promote, array(t("Disabled"), t("Enabled")));
+  if (module_exist("queue")) {
+    $output .= form_select(t("Moderation of news item"), "items_moderate", $node->items_moderate, array(("Disabled"), t("Enabled")));
+  }
+  if (module_exist("comment")) {
+    $output .= form_select(t("Allow user comments on news items"), "items_comment", $node->items_comment, array(("Disabled"), t("Read only"), t("Read-write")));
+  }
 
   return $output;
 }
@@ -255,14 +261,10 @@ function feed_theme_header($node) {
 }
 
 function feed_theme_item($item) {
-
-
   theme("node", $item, 0);
 }
 
 function feed_view($node, $main = 0) {
-
-
   if ($main) {
     theme("node", $node, $main);
   }
@@ -276,19 +278,17 @@ function feed_view($node, $main = 0) {
     }
 
     print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
-
   }
-
 }
 
 function feed_refresh($feed) {
-
   $content = _feed_get($feed->url, $feed);
   if ($content != "") {
     $info = rss_parse($content);
 
     if (!$info) {
       watchdog("error", "while updating ". $feed->title);
+      return status(t("error while updating %t", array("%t" => $feed->title)));
     }
     else {
       if (isset($info->items)) { 
@@ -303,6 +303,7 @@ function feed_refresh($feed) {
       $feed->changed = time();
 
       node_submit($feed);
+      return status(t("feed successfully updated."));
     }
   }
 }
@@ -397,32 +398,23 @@ function feed_page() {
 
 function feed_admin() {
   global $edit;
-
   $edit = $_POST["edit"];
-  $op = arg(3);
-  $id = arg(4);
 
   if (user_access("administer news feeds")) {
     if (!module_exist("item")) {
       $output = theme("theme_error", t("For the feed module to function properly please ensure that the item module is enabled in the ". l(t("modules configuration"), "admin/system/modules") ." page."));
     }
     else {
-      switch ($op) {
-        case "add":
+      switch ($edit["op"]) {
         case t("Add feed"):
-          $output = feed_admin_add_form($edit);
+          $output = feed_add_from_url($edit["url"]);
           break;
-        case "help":
-          $output = feed_help();
+        case "Refresh":
+          $output = feed_refresh(node_load(array("nid" => $edit["nid"])));
           break;
-        case "refresh":
-          $output = feed_refresh(node_load(array("nid" => $id)));
-          $output .= feed_admin_overview();
-          break;
-        case "overview":
-        default:
-          $output .= feed_admin_overview();
       }
+      $output .= feed_admin_add_form($edit);
+      $output .= feed_admin_overview();
     }
   }
   else {
@@ -444,14 +436,19 @@ function feed_get_feeds() {
 }
 
 function feed_admin_overview() {
-//  global $edit;
-
-  $output = feed_admin_add_form($edit);
   $header = array(t("title"), t("items"), t("last update"), array("data" => t("operations"), "colspan" => 2));
   $feeds = db_query("SELECT n.nid, n.title, n.changed, COUNT(i.nid) AS numitems, n.type FROM {node} n LEFT JOIN {item} i ON n.nid = i.parent GROUP BY n.nid HAVING n.type = \"feed\""); 
 
   while ($feed = db_fetch_object($feeds)) {
-    $rows[] = array(l(check_output($feed->title), "node/view/$feed->nid", array("title" => t("View this news feed."))), $feed->numitems, format_interval(time() - $feed->changed), l(t("administer"), "admin/node/edit/$feed->nid", array("title" => t("administer this news feed."))), l(t("refresh"), "admin/system/feeds/refresh/$feed->nid", array("title" => t("refresh this news feed."))));
+    $refresh = form_hidden("nid", "$feed->nid");
+    $refresh .= form_submit("Refresh", "edit[op]");
+    $rows[] = array(
+        l(check_output($feed->title), "node/view/$feed->nid", array("title" => t("View this news feed."))),
+        $feed->numitems,
+        format_interval(time() - $feed->changed),
+        l(t("administer"), "admin/node/edit/$feed->nid", array("title" => t("administer this news feed."))),
+        form($refresh, "post", "admin/system/feeds")
+        );
   }
 
   $output .= table($header, $rows);
@@ -468,18 +465,34 @@ function feed_add_from_url($url) {
     watchdog("error", t("Error while parsing %url", array("%url" => $url)));
   }
   else {
-    $body = $info->description;
     $created = $info->lastBuildDate ? $info->lastBuildDate : time();
-    $ttl = $info->ttl ? $info->ttl : 60;
-    $fields = array("type" => "feed", "title" => $info->title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => "0", "comment" => "0", "promote" => "0", "revision" => "0", "created" => $created, "url" => $url, "link" => $info->link, "items_comment" => "2", "items_promote" => "0", "refresh" => $ttl, "creator" => $info->creator);
-
+    $fields = array(
+        "type" => "feed",
+        "title" => $info->title,
+        "teaser" => $info->description,
+        "body" => $info->description,
+        "status" => 1,
+        "moderate" => "0",
+        "comment" => "0",
+        "promote" => "0",
+        "revision" => "0",
+        "created" => $created,
+        "url" => $url,
+        "link" => $info->link,
+        "creator" => $info->creator,
+        "refresh" => variable_get("feed_refresh", "60"),
+        "expire" => variable_get("feed_expire", "2419200"),
+        "items_promote" => variable_get("feed_items_promote", "0"),
+        "items_moderate" => variable_get("feed_items_moderate", "0"),
+        "items_comment" => variable_get("feed_items_comment", "0")
+        );
     $node = node_validate($fields, $error);
 
     if (!$node->error) {
       if (node_access("create", $node)) {
         $nid = node_save($node, array_merge($fields, module_invoke($node->type, "save", "create", $node)));
         if ($nid) {
-          $output = feed_admin_overview();
+          $output .= status("Feed successfully added.");
         }
         else {
           watchdog("error", "could not create news item");
@@ -495,14 +508,10 @@ function feed_add_from_url($url) {
 }
 
 function feed_admin_add_form($edit = array()) {
-  if (!isset($edit["url"])) {
-    $output = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
-    $output .= form_submit(t("Add feed"));
-    return form($output, "post", url("admin/system/feeds/add"));
-  }
-  else {
-     return feed_add_from_url($edit["url"]);
-  }
+  $output = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
+  $output .= form_checkbox(t("Automatically refresh"), "update", $edit["update"], 1);
+  $output .= form_submit(t("Add feed"), "edit[op]");
+  return form($output, "post", url("admin/system/feeds"));
 }
 
 function feed_block($op = "list", $delta = 0) {
