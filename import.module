@@ -7,7 +7,6 @@ function import_system($field) {
   return $system[$field];
 }
 
-
 function import_perm() {
   return array("access import");
 }
@@ -15,11 +14,11 @@ function import_perm() {
 function import_link($type, $node = 0, $main = 0) {
   if ($type == "system" && user_access("access import")) {
     if (!module_exist("feed") || !module_exist("item")) {
-      menu("import", t("news"), "import_page_error", 0);
+      menu("import", t("news aggregator"), "import_page_error", 0);
     }
     else {
-      menu("import", t("news"), "import_page_latest", 0);
-      menu("import/sources", t("sources"), "import_page_sources", 0);
+      menu("import", t("news aggregator"), "import_page_latest", 0);
+      menu("import/sources", t("news by source"), "import_page_sources", 0);
       if (module_exist("taxonomy_dhtml")) {
         menu("import/categories/item", t("categories"), "import_categories", 0);
         menu("import/categories/feed", t("sources by category"), "import_categories", 0);
@@ -31,24 +30,22 @@ function import_link($type, $node = 0, $main = 0) {
 }
 
 function theme_import_latestitem($node) {
-  print theme("node", $node, 0);
+  return theme("node", $node, 0);
 }
 
 function import_page_latest() {
-  print theme("header");
-
   $nids = module_invoke_all("import", "items");
   if ($nids) {
     $result = pager_query("SELECT nid FROM {node} WHERE nid IN (". implode(",", $nids) .") ORDER BY created DESC, nid DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0); 
   }
 
   while ($import_node = db_fetch_object($result)) {
-    print theme("import_latestitem", node_load(array("nid" => $import_node->nid)));
+    $output .= theme("import_latestitem", node_load(array("nid" => $import_node->nid)));
   }
 
-  print theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  $output .= theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-  print theme("footer");
+  print theme("page", $output);
 }
 
 function import_categories() {
@@ -61,28 +58,26 @@ function import_categories() {
   for ($n=0; $n < count($boxes); $n++) {
     print theme("box", $boxes[$n]["subject"], $boxes[$n]["content"]);
   }
-  print theme("footer");
+  return theme("footer");
 }
 
 function theme_import_source($node) {
-  print theme("node", $node, 1);
+  return theme("node", $node, 1);
 }
 
 function import_page_sources() {
-  print theme("header", t("News sources"));
-
   $nids = module_invoke_all("import", "sources");
   if ($nids) {
     $result = pager_query("SELECT nid FROM {node} WHERE nid IN (". implode(",", $nids) .") ORDER BY title, nid", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
   }
 
   while ($import_source = db_fetch_object($result)) {
-    print theme("import_source", node_load(array("nid" => $import_source->nid)));
+    $output .= theme("import_source", node_load(array("nid" => $import_source->nid)));
   }
 
-  print theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  $output .= theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-  print theme("footer");
+  print theme("page", $output);
 }
 
 function import_page_error() {

@@ -6,11 +6,18 @@ function item_system($field) {
   return $system[$field];
 }
 
-function item_node($field) {
-  $info["name"] = t("news item");
-  $info["description"] = t("A news item is an item that is part of an RSS feed.");
+function item_node_name($node) {
+  return t("news item");
+}
 
-  return $info[$field];
+function item_help($section = "admin/system/feeds") {
+  switch ($section) {
+    case 'node/add#item':
+      $output = t("A news item is an item that is part of an RSS feed.");
+      break;
+  }
+
+  return $output;
 }
 
 function item_access($op, $node) {
@@ -207,7 +214,7 @@ function item_find($feed, $item) {
 
   $title = substr($item["title"] ? $item["title"] : $feed->title, 0, 128); 
   $guid = $item["guid"] ? $item["guid"] : "";
-  $body = filter($item["description"] ? $item["description"] : "");
+  $body = check_output($item["description"] ? $item["description"] : "");
   $link = $item["link"] ? $item["link"] : $feed->link;
 
   if ($guid != "") {
@@ -270,25 +277,21 @@ function item_parse($feed, $item) {
 }
 
 function theme_item_pageitem($node) {
-
-
   return theme("node", $node, 0);
 }
 
 function item_page_last($result) {
   global $user;
 
-  print theme("header");
-
   while ($node = db_fetch_object($result)) {
     print theme("item_pageitem", node_load(array("nid" => $node->nid)));
   }
 
-  print theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  $output .= theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-  print "<div align=\"right\">". l("<img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "item/feed", array("title" => t("See these items in XML format."))) ."</div>\n";
+  $output .= "<div align=\"right\">". l("<img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "item/feed", array("title" => t("See these items in XML format."))) ."</div>\n";
 
-  print theme("footer");
+  print theme("page", $output);
 }
 
 function item_feed_last($result) {

@@ -6,11 +6,8 @@ function feed_system($field) {
   return $system[$field];
 }
 
-function feed_node($field) {
-  $info["name"] = t("news feed");
-  $info["description"] = t("A news feed is a source of news from other site(s).");
-
-  return $info[$field];
+function feed_node_name($node) {
+  return t("news feed");
 }
 
 function feed_help($section = "admin/system/feeds") {
@@ -23,13 +20,17 @@ function feed_help($section = "admin/system/feeds") {
       break;
     case "admin/system/modules/feed":
       $output .= "<p>These are the <b>default</b> settings for new feeds added via the ". l("feed administration page", "admin/system/feeds") .". Set up your feed preferences properly here before you add feeds.</p>";
+      break;
+    case 'node/add#feed':
+      $output = t("A news feed is a source of news from other site(s).");
+      break;
   }
 
   return $output;
 }
 
 function feed_perm() {
-  return array("access news feeds", "administer news feeds");
+  return array("access news feeds", "administer news feeds", "edit own feeds");
 }
 
 function feed_access($op, $node) {
@@ -40,15 +41,15 @@ function feed_access($op, $node) {
   }
 
   if ($op == "create") {
-    return user_access("administer news feeds");
+    return user_access("administer news feeds") || (user_access("edit own feeds") && $user->uid);
   }
 
   if ($op == "update") {
-    return user_access("administer news feeds");
+    return user_access("administer news feeds") || (user_access("edit own feeds") && ($user->uid == $node->uid));
   }
 
   if ($op == "delete") {
-    return user_access("administer news feeds");
+    return user_access("administer news feeds") || (user_access("edit own feeds") && ($user->uid == $node->uid));
   }
 
 }
@@ -248,8 +249,6 @@ function feed_link($type, $node = 0, $main = 0) {
 }
 
 function theme_feed_header($node) {
-
-
   $output = t("<p><b>Website:</b><div style=\"margin-left: 20px\"><a href=\"%url\" target=\"_blank\">%url</a></div></p><br />\n", array("%url" => $node->link));
   $output .= t("<p><b>Description:</b><div style=\"margin-left: 20px\">%descr</div><br />\n", array("%descr" => check_output($node->body, 1)));
   $output .= t("<p><b>Last update:</b><div style=\"margin-left: 20px\">%time ago</div></p><br />\n", array("%time" => format_interval(time() - $node->changed)));
@@ -257,7 +256,6 @@ function theme_feed_header($node) {
   $output .= "<div>". theme("links", link_node($node, 0)) ."</div>";
 
   return theme("box", t(check_output($node->title)), $output);
-
 }
 
 function theme_feed_item($item) {
@@ -339,7 +337,7 @@ function feed_cron() {
 }
 
 function theme_feed_pagefeed($node) {
-  print theme("node", $node, 1);
+  return theme("node", $node, 1);
 }
 
 function feed_page_feeds() {
@@ -347,16 +345,14 @@ function feed_page_feeds() {
 
   $result = pager_query("SELECT n.nid FROM {node} n, {feed} f WHERE (n.nid = f.nid) AND (n.status = 1) ORDER BY n.title", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-  print theme("header");
-
   while ($node = db_fetch_object($result)) {
     print theme("feed_pagefeed", node_load(array("nid" => $node->nid)));
   }
 
-  print "<div align=\"right\">". l("<img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "feed/feed", array("title" => t("See the exported news feeds in XML format."))) ."</div>\n";
-  print theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  $output .= "<div align=\"right\">". l("<img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "feed/feed", array("title" => t("See the exported news feeds in XML format."))) ."</div>\n";
+  $output .= theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-  print theme("footer");
+  print theme("page", $output);
 }
 
 function feed_feed_feeds() {
@@ -432,7 +428,7 @@ function feed_admin() {
             $feed->numitems,
             format_interval(time() - $feed->changed),
             l(t("administer"), "admin/node/edit/$feed->nid", array("title" => t("administer this news feed."))),
-            form($refresh, "post", "admin/system/feeds")
+            form($refresh, "post", url("admin/system/feeds"))
             );
       }
       $output .= theme("table", $header, $rows);
