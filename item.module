@@ -248,10 +248,10 @@ function item_parse($feed, $item) {
   }
 }
 
-function item_theme_pageitem($node) {
+function theme_item_pageitem($node) {
 
 
-  print theme("node", $node, 0);
+  return theme("node", $node, 0);
 }
 
 function item_page_last($result) {
@@ -260,7 +260,7 @@ function item_page_last($result) {
   print theme("header");
 
   while ($node = db_fetch_object($result)) {
-    print theme("item_theme_pageitem", node_load(array("nid" => $node->nid)));
+    print theme("item_pageitem", node_load(array("nid" => $node->nid)));
   }
 
   print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);

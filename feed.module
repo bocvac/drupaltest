@@ -241,7 +241,7 @@ function feed_link($type, $node = 0, $main = 0) {
   return $links ? $links : array();
 }
 
-function feed_theme_header($node) {
+function theme_feed_header($node) {
 
 
   $output = t("<p><b>Website:</b><div style=\"margin-left: 20px\"><a href=\"%url\" target=\"_blank\">%url</a></div></p><br />\n", array("%url" => $node->link));
@@ -250,34 +250,35 @@ function feed_theme_header($node) {
   $output .= "<div align=\"right\"><a href=\"$node->url\"><img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" /></a></div>\n";
   $output .= "<div>". theme("links", link_node($node, 0)) ."</div>";
 
-  print theme("box", t(check_output($node->title)), $output);
+  return theme("box", t(check_output($node->title)), $output);
 
 }
 
-function feed_theme_item($item) {
+function theme_feed_item($item) {
 
 
-  print theme("node", $item, 0);
+  return theme("node", $item, 0);
 }
 
 function feed_view($node, $main = 0) {
 
 
   if ($main) {
-    print theme("node", $node, $main);
+    $output = theme("node", $node, $main);
   }
   else {
     $result = pager_query("SELECT n.nid FROM {node} n, {item} i WHERE (n.nid = i.nid) AND (n.status = 1) AND (parent = '". $node->nid ."') ORDER BY i.weight DESC, n.created DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-    print theme("feed_theme_header", $node);
+    $output = theme("feed_header", $node);
 
     while ($item = db_fetch_object($result)) {
-      print theme("feed_theme_item", node_load(array("nid" => $item->nid)));
+     $output .= theme("feed_item", node_load(array("nid" => $item->nid)));
     }
 
-    print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+    $output .= pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   }
+  return $output;
 
 }
 
@@ -337,7 +338,7 @@ function feed_cron() {
   } 
 }
 
-function feed_theme_pagefeed($node) {
+function theme_feed_pagefeed($node) {
   print theme("node", $node, 1);
 }
 
@@ -349,7 +350,7 @@ function feed_page_feeds() {
   print theme("header");
 
   while ($node = db_fetch_object($result)) {
-    print theme("feed_theme_pagefeed", node_load(array("nid" => $node->nid)));
+    print theme("feed_pagefeed", node_load(array("nid" => $node->nid)));
   }
 
   print "<div align=\"right\">". l("<img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "feed/feed", array("title" => t("See the exported news feeds in XML format."))) ."</div>\n";
@@ -425,7 +426,7 @@ function feed_admin() {
     $output .= message_na();
   }
 
-  return $output;
+  print theme('page', $output);
 }
 
 function feed_get_feeds() {
