@@ -174,16 +174,21 @@ function item_new($feed, $item) {
   $weight = $item["locdate"] ? 0 : array_shift(db_fetch_array(db_query("SELECT MAX(weight)+1 AS newweight FROM item WHERE parent = '%s'", $feed->nid)));
   $name = $item["author"] ? $item["author"] : $feed->creator;
 
-  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => 0, "comment" => $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name);
+  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => 0, "comment" => $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name, "taxonomy" => array_keys(taxonomy_node_get_terms($feed->nid)));
   
   $node = node_validate($fields, $error);
 
   if (!$node->error) {
     if (node_access("create", $node)) {
-      $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
       $nid = node_save($node, array_merge($fields, module_invoke($node->type, "save", "create", $node)));
       if (!$nid) {
         watchdog("error", "could not create news item");
+      }
+      else {
+        $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
+        if (function_exists("taxonomy_node_save")) {
+          taxonomy_node_save($nid, $node->taxonomy);
+        }
       }
     }
     else {
@@ -240,6 +245,10 @@ function item_renew($feed, $node, $item) {
   $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
 
   node_submit($node);
+  if (function_exists("taxonomy_node_save")) {
+    taxonomy_node_save($node->nid, $node->taxonomy);
+  }
+
 }
 
 // feed is *node*

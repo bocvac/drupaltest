@@ -282,6 +282,11 @@ function feed_view($node, $main = 0) {
 
 function feed_refresh($feed) {
   $content = _feed_get($feed->url, $feed);
+  ob_start();
+  print_r($feed->taxonomy);
+  $taxo = ob_get_contents();
+  ob_end_clean();
+  watchdog("warning", "feed taxo : <pre>$taxo</pre>");
   if ($content != "") {
     $parser = new feedParser();
     $info = $parser->parseFeed($content);
