@@ -29,15 +29,15 @@ function import_link($type, $node = 0, $main = 0) {
 }
 
 function import_theme_latestitem($node) {
-  global $theme;
 
-  $theme->node($node, 0);
+
+  theme("node", $node, 0);
 }
 
 function import_page_latest() {
-  global $theme;
 
-  $theme->header();
+
+  theme("header");
 
   import_menu();
 
@@ -50,33 +50,33 @@ function import_page_latest() {
 
   print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-  $theme->footer();
+  theme("footer");
 
 }
 
 function import_page_categories() {
-  global $theme;
+
 
   $boxes = taxonomy_dhtml_overview("feed");
-  $theme->header();
+  theme("header");
   import_menu();
   for ($n=0; $n < count($boxes); $n++) {
-    $theme->box($boxes[$n]["subject"], $boxes[$n]["content"]);
+    theme("box", $boxes[$n]["subject"], $boxes[$n]["content"]);
   }
-  $theme->footer();
+  theme("footer");
 
 }
 
 function import_theme_source($node) {
-  global $theme;
 
-  $theme->node($node, 1);
+
+  theme("node", $node, 1);
 }
 
 function import_page_sources() {
-  global $theme;
 
-  $theme->header();
+
+  theme("header");
 
   import_menu();
 
@@ -89,7 +89,7 @@ function import_page_sources() {
 
   print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-  $theme->footer();
+  theme("footer");
 }
 
 function import_menu() {
@@ -98,13 +98,13 @@ function import_menu() {
 }
 
 function import_theme_menu($links) {
-  global $theme;
 
-  $theme->box(t("news feeds"), "<div align=\"center\">". $theme->links($links) ."</div>");
+
+  theme("box", t("news feeds"), "<div align=\"center\">". theme("links", $links) ."</div>");
 }
 
 function import_page() {
-  global $theme;
+
 
   $op = arg(1);
 

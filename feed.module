@@ -241,29 +241,29 @@ function feed_link($type, $node = 0, $main = 0) {
 }
 
 function feed_theme_header($node) {
-  global $theme;
+
 
   $output = t("<p><b>Website:</b><div style=\"margin-left: 20px\"><a href=\"%url\" target=\"_blank\">%url</a></div></p>\n", array("%url" => $node->link));
   $output .= t("<p><b>Description:</b><div style=\"margin-left: 20px\">%descr</div>\n", array("%descr" => check_output($node->body, 1)));
   $output .= t("<p><b>Last update:</b><div style=\"margin-left: 20px\">%time ago</div></p>\n", array("%time" => format_interval(time() - $node->changed)));
-  $output .= "<div align=\"right\"><a href=\"$node->url\"><img src=\"". $theme->image("xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" /></a></div>\n";
-  $output .= "<div>". $theme->links(link_node($node, 0)) ."</div>";
+  $output .= "<div align=\"right\"><a href=\"$node->url\"><img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" /></a></div>\n";
+  $output .= "<div>". theme("links", link_node($node, 0)) ."</div>";
 
-  $theme->box(t(check_output($node->title)), $output);
+  theme("box", t(check_output($node->title)), $output);
 
 }
 
 function feed_theme_item($item) {
-  global $theme;
 
-  $theme->node($item, 0);
+
+  theme("node", $item, 0);
 }
 
 function feed_view($node, $main = 0) {
-  global $theme;
+
 
   if ($main) {
-    $theme->node($node, $main);
+    theme("node", $node, $main);
   }
   else {
     $result = pager_query("SELECT n.nid FROM node n, item i WHERE (n.nid = i.nid) AND (n.status = 1) AND (parent = '". $node->nid ."') ORDER BY i.weight DESC, n.created DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
@@ -321,26 +321,26 @@ function feed_cron() {
 }
 
 function feed_theme_pagefeed($node) {
-  global $theme;
 
-  $theme->node($node, 1);
+
+  theme("node", $node, 1);
 }
 
 function feed_page_feeds() {
-  global $theme, $user;
+  global $user;
 
   $result = pager_query("SELECT n.nid FROM node n, feed f WHERE (n.nid = f.nid) AND (n.status = 1) ORDER BY n.title", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-  $theme->header();
+  theme("header");
 
   while ($node = db_fetch_object($result)) {
     theme("feed_theme_pagefeed", node_load(array("nid" => $node->nid)));
   }
 
-  print "<div align=\"right\">". l("<img src=\"". $theme->image("xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "feed/feed", array("title" => t("See the exported news feeds in XML format."))) ."</div>\n";
+  print "<div align=\"right\">". l("<img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "feed/feed", array("title" => t("See the exported news feeds in XML format."))) ."</div>\n";
   print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
-  $theme->footer();
+  theme("footer");
 }
 
 function feed_feed_feeds() {
