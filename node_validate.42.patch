@@ -1,0 +1,16 @@
+Index: modules/node.module
+===================================================================
+RCS file: /cvs/drupal/drupal/modules/node.module,v
+retrieving revision 1.233
+diff -u -r1.233 node.module
+--- modules/node.module	2 Jul 2003 17:09:08 -0000	1.233
++++ modules/node.module	19 Jul 2003 14:31:23 -0000
+@@ -943,7 +943,7 @@
+     ** Validate the "authored by"-field:
+     */
+ 
+-    if (empty($node->name)) {
++    if (empty($node->name) || empty($node->uid)){
+       /*
+       ** The use of empty() is mandatory in the context of usernames
+       ** as the empty string denotes the anonymous user.  In case we
