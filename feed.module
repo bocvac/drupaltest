@@ -411,7 +411,7 @@ function feed_admin() {
           feed_add_from_url($edit["url"]);
           break;
         case t("Refresh"):
-          $output = feed_refresh(node_load(array("nid" => $edit["nid"])));
+          feed_refresh(node_load(array("nid" => $edit["nid"])));
           break;
       }
       $add_form = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
