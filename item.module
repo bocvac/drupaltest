@@ -47,10 +47,10 @@ function item_save($op, $node) {
 
   if ($op == "create") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "parent", "link", "guid", "weight");
+      $main_fields = array("body" => $node->body, "teaser" => $node->teaser, "parent", "link", "guid", "weight");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "parent", "link", "guid", "weight");
+      $main_fields = array("body" => $node->body, "teaser" => $node->teaser, "moderate" => "1", "promote" => 0, "parent", "link", "guid", "weight");
     }
 
     return array_merge($main_fields, $save_fields);
@@ -183,12 +183,6 @@ function item_new($feed, $item) {
       $nid = node_save($node, array_merge($fields, module_invoke($node->type, "save", "create", $node)));
       if (!$nid) {
         watchdog("error", "could not create news item");
-      }
-      else {
-        $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
-        if (function_exists("taxonomy_node_save")) {
-          taxonomy_node_save($nid, $node->taxonomy);
-        }
       }
     }
     else {
