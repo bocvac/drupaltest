@@ -275,7 +275,7 @@ function feed_view($node, $main = 0) {
      $output .= theme("feed_item", node_load(array("nid" => $item->nid)));
     }
 
-    $output .= pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+    $output .= theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   }
   return $output;
@@ -354,7 +354,7 @@ function feed_page_feeds() {
   }
 
   print "<div align=\"right\">". l("<img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" />", "feed/feed", array("title" => t("See the exported news feeds in XML format."))) ."</div>\n";
-  print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  print theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   print theme("footer");
 }

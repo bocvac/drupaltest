@@ -49,7 +49,7 @@ function import_page_latest() {
     print theme("import_theme_latestitem", node_load(array("nid" => $import_node->nid)));
   }
 
-  print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  print theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   print theme("footer");
 
@@ -88,7 +88,7 @@ function import_page_sources() {
     print theme("import_theme_source", node_load(array("nid" => $import_source->nid)));
   }
 
-  print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  print theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   print theme("footer");
 }
