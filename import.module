@@ -30,14 +30,10 @@ function import_link($type, $node = 0, $main = 0) {
 }
 
 function import_theme_latestitem($node) {
-
-
   theme("node", $node, 0);
 }
 
 function import_page_latest() {
-
-
   theme("header", t("Latest news"));
 
   import_menu();
@@ -52,12 +48,9 @@ function import_page_latest() {
   print pager_display("", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   theme("footer");
-
 }
 
 function import_categories($type) {
-
-
   $boxes = taxonomy_dhtml_overview($type);
   theme("header", ($type == "item" ? t("News by category") : t("News sources by category")));
   import_menu();
@@ -65,18 +58,13 @@ function import_categories($type) {
     theme("box", $boxes[$n]["subject"], $boxes[$n]["content"]);
   }
   theme("footer");
-
 }
 
 function import_theme_source($node) {
-
-
   theme("node", $node, 1);
 }
 
 function import_page_sources() {
-
-
   theme("header", t("News sources"));
 
   import_menu();
@@ -99,16 +87,18 @@ function import_menu() {
 }
 
 function import_theme_menu($links) {
-
-
   theme("box", t("News feeds"), "<div align=\"center\">". theme("links", $links) ."</div>");
 }
 
 function import_page() {
-
-
   $op = arg(1);
 
+  if (!module_exist("feed") || !module_exist("item")) {
+    theme("header");
+    print theme("theme_error", t("For the import module to function properly please ensure that both the feed and item modules are enabled in the ". l(t("modules configuration"), "admin/system/modules") ." page."));
+    theme("footer");
+    return;
+  }
   switch ($op) {
     case "sources":
       import_page_sources();

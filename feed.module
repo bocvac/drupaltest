@@ -403,21 +403,26 @@ function feed_admin() {
   $id = arg(4);
 
   if (user_access("administer news feeds")) {
-    switch ($op) {
-      case "add":
-      case t("Add feed"):
-        $output = feed_admin_add_form($edit);
-        break;
-      case "help":
-        $output = feed_help();
-        break;
-      case "refresh":
-        $output = feed_refresh(node_load(array("nid" => $id)));
-        $output .= feed_admin_overview();
-        break;
-      case "overview":
-      default:
-        $output .= feed_admin_overview();
+    if (!module_exist("item")) {
+      $output = theme("theme_error", t("For the feed module to function properly please ensure that the item module is enabled in the ". l(t("modules configuration"), "admin/system/modules") ." page."));
+    }
+    else {
+      switch ($op) {
+        case "add":
+        case t("Add feed"):
+          $output = feed_admin_add_form($edit);
+          break;
+        case "help":
+          $output = feed_help();
+          break;
+        case "refresh":
+          $output = feed_refresh(node_load(array("nid" => $id)));
+          $output .= feed_admin_overview();
+          break;
+        case "overview":
+        default:
+          $output .= feed_admin_overview();
+      }
     }
   }
   else {
