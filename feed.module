@@ -450,7 +450,7 @@ function feed_admin_overview() {
     $rows[] = array(l(check_output($feed->title), "node/view/$feed->nid", array("title" => t("View this news feed."))), $feed->numitems, format_interval(time() - $feed->changed), l(t("administer"), "admin/node/edit/$feed->nid", array("title" => t("administer this news feed."))), l(t("refresh"), "admin/system/feeds/refresh/$feed->nid", array("title" => t("refresh this news feed."))));
   }
 
-  $output .= table($header, $rows);
+  $output .= theme("table", $header, $rows);
   return $output;
 
 }
