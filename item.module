@@ -239,10 +239,6 @@ function item_renew($feed, $node, $item) {
   $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));
 
   node_submit($node);
-  if (function_exists("taxonomy_node_save")) {
-    taxonomy_node_save($node->nid, $node->taxonomy);
-  }
-
 }
 
 // feed is *node*
