@@ -167,7 +167,7 @@ function item_new($feed, $item) {
   $name = $item["creator"] ? $item["creator"] : $feed->creator;
 
   // automatically disable local commenting if the item already comes with a comments link
-  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => 0, "comment" => $item["comments"] ? 0 : $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name, "taxonomy" => array_keys(taxonomy_node_get_terms($feed->nid)));
+  $fields = array("type" => "item", "title" => $title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => 0, "comment" => isset($item["comments"]) ? 0 : $feed->items_comment, "promote" => $feed->items_promote, "revision" => 0, "guid" => $guid, "link" => $link, "parent" => $feed->nid, "created" => $created, "weight" => $weight, "commentsurl" => $item["comments"], "name" => $name, "taxonomy" => array_keys(taxonomy_node_get_terms($feed->nid)));
   
   $node = node_validate($fields, $error);
 
@@ -227,6 +227,7 @@ function item_renew($feed, $node, $item) {
   $node->body = $body;
   $node->link = $link;
   $node->commentsurl = $item["comments"];
+  $node->comments = isset($item["comments"]) ? 0 : $node->comments;
   $node->name = $name;
 
   $node->taxonomy = array_keys(taxonomy_node_get_terms($feed->nid));

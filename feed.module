@@ -729,6 +729,7 @@ function rss_parse($text) {
   xml_set_character_data_handler($parser, "rss_xml_cdata");
   xml_parser_set_option($parser, XML_OPTION_TARGET_ENCODING, "utf-8");
   if (!xml_parse($parser, $text, 1)) {
+    watchdog("error", t("failed to parse RSS feed : %error at line %line.", array("%error" => xml_error_string(xml_get_error_code($parser)), "%line" => xml_get_current_line_number($parser))));
     return false;
   }
   xml_parser_free($parser);
