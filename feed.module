@@ -16,10 +16,10 @@ function feed_node($field) {
 function feed_help($section = "admin/system/feeds") {
   switch ($section) {
     case "admin/system/feeds":
-      $output = "<p>In Drupal you have <i>feeds</i>.   Feeds define news sources.</p>";
-      $output .= "<p>You can have several providers of news feeds.  You can add a feed by clicking the \"add feed\" link on the import administration pages. Simply supply the URI.  You have just defined your first feed.  If you have more feeds repeat as necessary.</p>";
-      $output .= "<p>To verify whether your feed works, press \"refresh\" at the overview page.  The number of news items that have been sucessfully fetched, should then become visible in the second column of the feed overview.</p>";
-      $output .="<p>Your newly created feed(s) will now show up in the list of blocks that you can see at the block related administration pages.  There you can customize where and when your feed(s) will be displayed.</p>";
+      $output = "<p>This page is designed for creation and administration of news feeds. Here you can add new feeds, modify individual settings, and update the content contained in each feed.</p>";
+      $output .= "<p>In order to add a feed, you will need to enter the URL and click the \"Add feed\" button. If you wish to update the feed when you add it, simply leave the \"Do initial refresh\" checkbox checked. If you uncheck this box, the feed will not be initialized until you first click \"Refresh.\" If you wish to modify the default settings for feeds, you can do so via the ". l("feed defaults page", "admin/system/modules/feed").". Alternatively, you can modify the settings for each individual feed by clicking the \"administer\" link on this page.</p>";
+      $output .= "<p>If your feed is working correctly, the number of news items that have been sucessfully fetched will then become visible in the items column of the feed overview. Note that most sites request a courtesy time between refreshes so their servers are not overloaded. Please be aware of this and set your feed refreshes accordingly.</p>";
+      $output .="<p>Your newly created feed(s) will now show up in the list of blocks that you can see at the block related administration pages. There you can customize where and when your feed(s) will be displayed.</p>";
       break;
     case "admin/system/modules/feed":
       $output .= "<p>These are the <b>default</b> settings for new feeds added via the ". l("feed administration page", "admin/system/feeds") .". Set up your feed preferences properly here before you add feeds.</p>";
@@ -413,7 +413,7 @@ function feed_admin() {
           $output = feed_refresh(node_load(array("nid" => $edit["nid"])));
           break;
       }
-      $add_form = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
+      $add_form = form_textfield(t("URL"), "url", "", 50, 255, t("The URL to the RSS/RDF file"));
       $add_form .= form_checkbox(t("Do initial refresh"), "update", 1, 1);
       $add_form .= form_submit(t("Add feed"), "edit[op]");
       $output .= form($add_form, "post", url("admin/system/feeds"));
