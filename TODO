@@ -1,1 +1,0 @@
-Move logic from _save() to _validate() in feed annd item modules.
