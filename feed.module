@@ -63,10 +63,10 @@ function feed_save($op, $node) {
 
   if ($op == "create") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link");
+      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link", "expire");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link");
+      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link", "expire");
     }
 
     return array_merge($main_fields, $save_fields);
@@ -74,10 +74,10 @@ function feed_save($op, $node) {
 
   if ($op == "update") {
     if (user_access("administer news feeds")) {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link");
+      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "url", "refresh", "link", "expire");
     }
     else {
-      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link");
+      $main_fields = array("body" => filter($node->body), "teaser" => filter($node->teaser), "moderate" => "1", "promote" => 0, "comments" => "0", "url", "refresh", "link", "expire");
     }
 
     return array_merge($main_fields, $save_fields);
@@ -98,13 +98,13 @@ function _feed_pack_fields($node) {
 function feed_insert($node) {
   $data = _feed_pack_fields($node);
 
-  db_query("INSERT INTO feed (nid, url, refresh, link, data) VALUES('%d', '%s', '%d', '%s', '%s')", $node->nid, $node->url, $node->refresh, $node->link, $data);
+  db_query("INSERT INTO feed (nid, url, refresh, link, expire, data) VALUES('%d', '%s', '%d', '%s', '%d', '%s')", $node->nid, $node->url, $node->refresh, $node->expire, $node->link, $data);
 }
 
 function feed_update($node) {
   $data = _feed_pack_fields($node);
 
-  db_query("UPDATE feed SET url = '%s', refresh = '%d', link = '%s', data = '%s' WHERE nid = '%d'", $node->url, $node->refresh, $node->link, $data, $node->nid);
+  db_query("UPDATE feed SET url = '%s', refresh = '%d', link = '%s', expire = '%d', data = '%s' WHERE nid = '%d'", $node->url, $node->refresh, $node->link, $node->expire, $data, $node->nid);
 }
 
 function feed_delete($node) {
@@ -118,7 +118,7 @@ function feed_delete($node) {
 }
 
 function feed_load($node) {
-  $feed = db_fetch_object(db_query("SELECT url, refresh, link, data FROM feed WHERE nid = '%d'", $node->nid));
+  $feed = db_fetch_object(db_query("SELECT url, refresh, link, expire, data FROM feed WHERE nid = '%d'", $node->nid));
 
   $data = unserialize($feed->data);
 
@@ -196,6 +196,7 @@ function feed_form_fields(&$node, &$help, &$error) {
 
 function feed_form(&$node, &$help, &$error) {
   global $edit;
+  $expires = array(0 => t("Never"), 604800 => t("One week"), 1209600 => t("Two weeks"), 2419200 => t("Four weeks"));
 
   $output = "";
 
@@ -207,6 +208,7 @@ function feed_form(&$node, &$help, &$error) {
   $output .= form_textfield(t("Site link"), "link", $node->link, 60, 255);
   $output .= form_textarea(t("Description"), "body", $node->body, 55, 10, t("Phrase or sentence describing the channel."));
   $output .= form_textfield(t("Update interval"), "refresh", $node->refresh, 10, 10, t("The refresh interval indicating how often you want to update this feed, in minutes.  Requires crontab."));
+  $output .= form_select(t("Items expire in"), "expire", $node->expire ? $node->expire : 0, $expires, t("Indicate wether items from this feed should be automatically deleted."));
 
   $output .= feed_form_fields($node, $help, $error);
 
@@ -289,6 +291,14 @@ function feed_refresh($feed) {
   }
 }
 
+function feed_expire($nid, $expire) {
+  $result = db_query("SELECT n.nid FROM item i, node n WHERE (i.nid = n.nid) AND (i.parent = %d) AND ((n.changed + %d) < %d) ORDER BY n.nid", $nid, $expire, time());
+
+  while ($item = db_fetch_object($result)) {
+    node_delete(array("nid" => $item->nid, "confirm" => 1));
+  }
+}
+
 function feed_cron() {
   global $user, $name, $passwd;
 
@@ -303,6 +313,11 @@ function feed_cron() {
       feed_refresh(node_load(array("nid" => $feed->nid)));
     }
 
+    $result = db_query("SELECT n.nid, f.expire FROM node n, feed f WHERE (n.nid = f.nid) AND (n.status = 1) AND (f.expire > 0) ORDER BY n.nid");
+
+    while ($feed = db_fetch_object($result)) {
+      feed_expire($feed->nid, $feed->expire);
+    }
   } 
 }
 
