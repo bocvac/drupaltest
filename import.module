@@ -43,7 +43,7 @@ function import_page_latest() {
   import_menu();
 
   $nids = module_invoke_all("import", "items");
-  $result = pager_query("SELECT nid FROM node WHERE nid IN (". implode(",", $nids) .") ORDER BY created DESC, nid DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0); 
+  $result = pager_query("SELECT nid FROM {node} WHERE nid IN (". implode(",", $nids) .") ORDER BY created DESC, nid DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0); 
 
   while ($import_node = db_fetch_object($result)) {
     theme("import_theme_latestitem", node_load(array("nid" => $import_node->nid)));
@@ -82,7 +82,7 @@ function import_page_sources() {
   import_menu();
 
   $nids = module_invoke_all("import", "sources");
-  $result = pager_query("SELECT nid FROM node WHERE nid IN (". implode(",", $nids) .") ORDER BY title, nid", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  $result = pager_query("SELECT nid FROM {node} WHERE nid IN (". implode(",", $nids) .") ORDER BY title, nid", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   while ($import_source = db_fetch_object($result)) {
     theme("import_theme_source", node_load(array("nid" => $import_source->nid)));

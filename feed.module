@@ -13,13 +13,17 @@ function feed_node($field) {
   return $info[$field];
 }
 
-function feed_help() {
-?>
-  <p>In Drupal you have <i>feeds</i>.   Feeds define news sources.</p>
-  <p>You can have several providers of news feeds.  You can add a feed by clicking the "add feed" link on the import administration pages. Simply supply the URI.  You have just defined your first feed.  If you have more feeds repeat as necessary.</p>
-  <p>To verify whether your feed works, press "refresh" at the overview page.  The number of news items that have been sucessfully fetched, should then become visible in the second column of the feed overview.</p>
-  <p>Your newly created feed(s) will now show up in the list of blocks that you can see at the block related administration pages.  There you can customize where and when your feed(s) will be displayed.</p>
-<?php
+function feed_help($section = "admin/system/feeds/help") {
+  switch ($section) {
+    case 'admin/system/feeds/help':
+      $output = "<p>In Drupal you have <i>feeds</i>.   Feeds define news sources.</p>";
+      $output .= "<p>You can have several providers of news feeds.  You can add a feed by clicking the \"add feed\" link on the import administration pages. Simply supply the URI.  You have just defined your first feed.  If you have more feeds repeat as necessary.</p>";
+      $output .= "<p>To verify whether your feed works, press \"refresh\" at the overview page.  The number of news items that have been sucessfully fetched, should then become visible in the second column of the feed overview.</p>";
+      $output .="<p>Your newly created feed(s) will now show up in the list of blocks that you can see at the block related administration pages.  There you can customize where and when your feed(s) will be displayed.</p>";
+      break;
+  }
+
+  return $output;
 }
 
 function feed_perm() {
@@ -102,27 +106,27 @@ function _feed_pack_fields($node) {
 function feed_insert($node) {
   $data = _feed_pack_fields($node);
 
-  db_query("INSERT INTO feed (nid, url, refresh, link, expire, data) VALUES('%d', '%s', '%d', '%s', '%d', '%s')", $node->nid, $node->url, $node->refresh, $node->expire, $node->link, $data);
+  db_query("INSERT INTO {feed} (nid, url, refresh, link, expire, data) VALUES('%d', '%s', '%d', '%s', '%d', '%s')", $node->nid, $node->url, $node->refresh, $node->expire, $node->link, $data);
 }
 
 function feed_update($node) {
   $data = _feed_pack_fields($node);
 
-  db_query("UPDATE feed SET url = '%s', refresh = '%d', link = '%s', expire = '%d', data = '%s' WHERE nid = '%d'", $node->url, $node->refresh, $node->link, $node->expire, $data, $node->nid);
+  db_query("UPDATE {feed} SET url = '%s', refresh = '%d', link = '%s', expire = '%d', data = '%s' WHERE nid = '%d'", $node->url, $node->refresh, $node->link, $node->expire, $data, $node->nid);
 }
 
 function feed_delete($node) {
-  $result = db_query("SELECT * FROM item WHERE parent = '%d'", $node->nid);
+  $result = db_query("SELECT * FROM {item} WHERE parent = '%d'", $node->nid);
 
   while ($item = db_fetch_object($result)) {
     node_delete(array("nid" => $item->nid, "confirm" => 1));
   }
 
-  db_query("DELETE FROM feed WHERE nid = '%d'", $node->nid);
+  db_query("DELETE FROM {feed} WHERE nid = '%d'", $node->nid);
 }
 
 function feed_load($node) {
-  $feed = db_fetch_object(db_query("SELECT url, refresh, link, expire, data FROM feed WHERE nid = '%d'", $node->nid));
+  $feed = db_fetch_object(db_query("SELECT url, refresh, link, expire, data FROM {feed} WHERE nid = '%d'", $node->nid));
 
   $data = unserialize($feed->data);
 
@@ -230,9 +234,8 @@ function feed_link($type, $node = 0, $main = 0) {
     $links[] = l(t("read more"), "node/view/$node->nid", array("title" => t("Read more news from this feed.")));
   }
 
-  if (($type == "admin") && user_access("administer news feeds")) {
-    menu("admin/feed", "feed management", "feed_admin", NULL, 8);
-    menu("admin/feed/help", "help", "feed_help", NULL, 10);
+  if (($type == "system") && user_access("administer news feeds")) {
+    menu("admin/system/feeds", t("feeds"), "feed_admin", 8);
   }
 
   return $links ? $links : array();
@@ -264,7 +267,7 @@ function feed_view($node, $main = 0) {
     theme("node", $node, $main);
   }
   else {
-    $result = pager_query("SELECT n.nid FROM node n, item i WHERE (n.nid = i.nid) AND (n.status = 1) AND (parent = '". $node->nid ."') ORDER BY i.weight DESC, n.created DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+    $result = pager_query("SELECT n.nid FROM {node} n, {item} i WHERE (n.nid = i.nid) AND (n.status = 1) AND (parent = '". $node->nid ."') ORDER BY i.weight DESC, n.created DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
     theme("feed_theme_header", $node);
 
@@ -302,7 +305,7 @@ function feed_refresh($feed) {
 }
 
 function feed_expire($nid, $expire) {
-  $result = db_query("SELECT n.nid FROM item i, node n WHERE (i.nid = n.nid) AND (i.parent = %d) AND ((n.changed + %d) < %d) ORDER BY n.nid", $nid, $expire, time());
+  $result = db_query("SELECT n.nid FROM {item} i, {node} n WHERE (i.nid = n.nid) AND (i.parent = %d) AND ((n.changed + %d) < %d) ORDER BY n.nid", $nid, $expire, time());
 
   while ($item = db_fetch_object($result)) {
     node_delete(array("nid" => $item->nid, "confirm" => 1));
@@ -317,13 +320,13 @@ function feed_cron() {
   }
 
   if (user_access("administer news feeds")) {
-    $result = db_query("SELECT n.nid AS nid FROM node n, feed f WHERE (n.nid = f.nid) AND (n.status = 1) AND ((n.changed + (f.refresh * 60)) < '%d')", time());
+    $result = db_query("SELECT n.nid AS nid FROM {node} n, {feed} f WHERE (n.nid = f.nid) AND (n.status = 1) AND ((n.changed + (f.refresh * 60)) < '%d')", time());
 
     while ($feed = db_fetch_object($result)) {
       feed_refresh(node_load(array("nid" => $feed->nid)));
     }
 
-    $result = db_query("SELECT n.nid, f.expire FROM node n, feed f WHERE (n.nid = f.nid) AND (n.status = 1) AND (f.expire > 0) ORDER BY n.nid");
+    $result = db_query("SELECT n.nid, f.expire FROM {node} n, {feed} f WHERE (n.nid = f.nid) AND (n.status = 1) AND (f.expire > 0) ORDER BY n.nid");
 
     while ($feed = db_fetch_object($result)) {
       feed_expire($feed->nid, $feed->expire);
@@ -338,7 +341,7 @@ function feed_theme_pagefeed($node) {
 function feed_page_feeds() {
   global $user;
 
-  $result = pager_query("SELECT n.nid FROM node n, feed f WHERE (n.nid = f.nid) AND (n.status = 1) ORDER BY n.title", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  $result = pager_query("SELECT n.nid FROM {node} n, {feed} f WHERE (n.nid = f.nid) AND (n.status = 1) ORDER BY n.title", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
 
   theme("header");
 
@@ -353,7 +356,7 @@ function feed_page_feeds() {
 }
 
 function feed_feed_feeds() {
-  $result = db_query("SELECT n.title, f.url FROM node n, feed f WHERE (n.nid = f.nid) AND (n.status = 1) ORDER BY n.title");
+  $result = db_query("SELECT n.title, f.url FROM {node} n, {feed} f WHERE (n.nid = f.nid) AND (n.status = 1) ORDER BY n.title");
 
   $output = "<?xml version=\"1.0\"?>\n\n";
   $output .= "<rssfeeds version=\"0.1\">\n\n";
@@ -394,36 +397,38 @@ function feed_admin() {
   global $edit;
 
   $edit = $_POST["edit"];
-  $op = arg(2);
-  $id = arg(3);
+  $op = arg(3);
+  $id = arg(4);
 
   if (user_access("administer news feeds")) {
     switch ($op) {
       case "add":
       case t("Add feed"):
-        feed_admin_add_form($edit);
+        $output = feed_admin_add_form($edit);
         break;
       case "help":
-        print feed_help();
+        $output = feed_help();
         break;
       case "refresh":
-        feed_refresh(node_load(array("nid" => $id)));
-        feed_admin_overview();
+        $output = feed_refresh(node_load(array("nid" => $id)));
+        $output .= feed_admin_overview();
         break;
       case "overview":
       default:
-        feed_admin_overview();
+        $output .= feed_admin_overview();
     }
   }
   else {
-    message_na();
+    $output .= message_na();
   }
+
+  return $output;
 }
 
 function feed_get_feeds() {
   $nodes = array("0" => "<none>");
 
-  $result = db_query("SELECT nid, title FROM node WHERE (status = '1') AND (type = \"feed\") ORDER BY title");
+  $result = db_query("SELECT nid, title FROM {node} WHERE (status = '1') AND (type = \"feed\") ORDER BY title");
   while ($row = db_fetch_object($result)) {
     $nodes[$row->nid] = $row->title;
   }
@@ -434,15 +439,16 @@ function feed_get_feeds() {
 function feed_admin_overview() {
 //  global $edit;
 
-  feed_admin_add_form($edit);
+  $output = feed_admin_add_form($edit);
   $header = array(t("title"), t("items"), t("last update"), array("data" => t("operations"), "colspan" => 2));
-  $feeds = db_query("SELECT n.nid, n.title, n.changed, COUNT(i.nid) AS numitems, n.type FROM node n LEFT JOIN item i ON n.nid = i.parent GROUP BY n.nid HAVING n.type = \"feed\""); 
+  $feeds = db_query("SELECT n.nid, n.title, n.changed, COUNT(i.nid) AS numitems, n.type FROM {node} n LEFT JOIN {item} i ON n.nid = i.parent GROUP BY n.nid HAVING n.type = \"feed\""); 
 
   while ($feed = db_fetch_object($feeds)) {
-    $rows[] = array(l(check_output($feed->title), "node/view/$feed->nid", array("title" => t("View this news feed."))), $feed->numitems, format_interval(time() - $feed->changed), l(t("administer"), "admin/node/edit/$feed->nid", array("title" => t("administer this news feed."))), l(t("refresh"), "admin/feed/refresh/$feed->nid", array("title" => t("refresh this news feed."))));
+    $rows[] = array(l(check_output($feed->title), "node/view/$feed->nid", array("title" => t("View this news feed."))), $feed->numitems, format_interval(time() - $feed->changed), l(t("administer"), "admin/node/edit/$feed->nid", array("title" => t("administer this news feed."))), l(t("refresh"), "admin/system/feeds/refresh/$feed->nid", array("title" => t("refresh this news feed."))));
   }
 
-  print table($header, $rows);
+  $output .= table($header, $rows);
+  return $output;
 
 }
 
@@ -466,7 +472,7 @@ function feed_add_from_url($url) {
       if (node_access("create", $node)) {
         $nid = node_save($node, array_merge($fields, module_invoke($node->type, "save", "create", $node)));
         if ($nid) {
-          feed_admin_overview();
+          $output = feed_admin_overview();
         }
         else {
           watchdog("error", "could not create news item");
@@ -478,22 +484,23 @@ function feed_add_from_url($url) {
     } 
  
   }
+  return $output;
 }
 
 function feed_admin_add_form($edit = array()) {
   if (!isset($edit["url"])) {
     $output = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
     $output .= form_submit(t("Add feed"));
-    print form($output, "post", url("admin/feed/add"));
+    return form($output, "post", url("admin/system/feeds/add"));
   }
   else {
-     feed_add_from_url($edit["url"]);
+     return feed_add_from_url($edit["url"]);
   }
 }
 
 function feed_block($op = "list", $delta = 0) {
   if ($op == "list") {
-    $feeds = db_query("SELECT nid, title FROM node WHERE (status = '1') AND (type = \"feed\") ORDER BY nid");
+    $feeds = db_query("SELECT nid, title FROM {node} WHERE (status = '1') AND (type = \"feed\") ORDER BY nid");
     $num = 0;
     while ($feed = db_fetch_object($feeds)) {
       $block[$num]["info"] = t($feed->title);
@@ -503,9 +510,9 @@ function feed_block($op = "list", $delta = 0) {
   }
   else {
     if (user_access("access news feeds")) {
-      $nid = array_shift(db_fetch_array(db_query("SELECT nid, title FROM node WHERE (status = '1') AND (type = \"feed\") ORDER BY nid LIMIT $delta, 1")));
+      $nid = array_shift(db_fetch_array(db_query("SELECT nid, title FROM {node} WHERE (status = '1') AND (type = \"feed\") ORDER BY nid LIMIT $delta, 1")));
       $feed = node_load(array("nid" => $nid));
-      $items = db_query("SELECT n.nid, n.title FROM node n, item i WHERE (n.nid = i.nid) AND (i.parent = '%s') ORDER BY i.weight DESC, n.created DESC, n.title LIMIT 10", $nid);
+      $items = db_query("SELECT n.nid, n.title FROM {node} n, {item} i WHERE (n.nid = i.nid) AND (i.parent = '%s') ORDER BY i.weight DESC, n.created DESC, n.title LIMIT 10", $nid);
       $block["subject"] = t($feed->title);
       $block["content"] = node_title_list($items);
       $block["content"] .= "<div align=\"right\">". l(t("more"), "node/view/$nid") ."</div>\n";
@@ -516,7 +523,7 @@ function feed_block($op = "list", $delta = 0) {
 
 function feed_import($op) {
   if ($op == "sources") {
-    $result = db_query("SELECT nid FROM node WHERE (status = '1') AND (type = \"feed\") ORDER BY title");
+    $result = db_query("SELECT nid FROM {node} WHERE (status = '1') AND (type = \"feed\") ORDER BY title");
     while ($source = db_fetch_object($result)) {
       $sources[] = $source->nid;
     }

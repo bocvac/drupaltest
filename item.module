@@ -78,21 +78,21 @@ function _item_pack_fields($node) {
 function item_insert($node) {
   $data = _item_pack_fields($node);
 
-  db_query("INSERT INTO item (nid, parent, weight, link, guid, data) VALUES('%d', '%d', '%d', '%s', '%s', '%s')", $node->nid, $node->parent, $node->weight, $node->link, $node->guid, $data); 
+  db_query("INSERT INTO {item} (nid, parent, weight, link, guid, data) VALUES('%d', '%d', '%d', '%s', '%s', '%s')", $node->nid, $node->parent, $node->weight, $node->link, $node->guid, $data); 
 }
 
 function item_update($node) {
   $data = _item_pack_fields($node);
 
-  db_query("UPDATE item SET parent = '%d', link = '%s', guid = '%s', data = '%s' WHERE nid = '%d'", $node->parent, $node->link, $node->guid, $data, $node->nid);
+  db_query("UPDATE {item} SET parent = '%d', link = '%s', guid = '%s', data = '%s' WHERE nid = '%d'", $node->parent, $node->link, $node->guid, $data, $node->nid);
 }
 
 function item_delete($node) {
-  db_query("DELETE FROM item WHERE nid = '%d'", $node->nid);
+  db_query("DELETE FROM {item} WHERE nid = '%d'", $node->nid);
 }
 
 function item_load($node) {
-  $item = db_fetch_object(db_query("SELECT parent, weight, guid, link, data FROM item WHERE nid = '%d'", $node->nid));
+  $item = db_fetch_object(db_query("SELECT parent, weight, guid, link, data FROM {item} WHERE nid = '%d'", $node->nid));
 
   $data = unserialize($item->data);
 
@@ -198,13 +198,13 @@ function item_find($feed, $item) {
   $link = $item["link"] ? $item["link"] : $feed->link;
 
   if ($guid != "") {
-    $result = db_query("SELECT n.nid FROM node n, item i WHERE (n.type = \"item\") AND (n.nid = i.nid) AND (i.parent = '%d') AND (i.guid = '%s')", $feed->nid, $guid);
+    $result = db_query("SELECT n.nid FROM {node} n, {item} i WHERE (n.type = \"item\") AND (n.nid = i.nid) AND (i.parent = '%d') AND (i.guid = '%s')", $feed->nid, $guid);
   }
   else if ($link == "") {
-    $result = db_query("SELECT n.nid FROM node n, item i WHERE (n.type = \"item\") AND (n.nid = i.nid) AND (i.parent = '%d') AND (n.title = '%s') AND (n.body = '%s')", $feed->nid, $title, $body);
+    $result = db_query("SELECT n.nid FROM {node} n, {item} i WHERE (n.type = \"item\") AND (n.nid = i.nid) AND (i.parent = '%d') AND (n.title = '%s') AND (n.body = '%s')", $feed->nid, $title, $body);
   }
   else {
-    $result = db_query("SELECT n.nid FROM node n, item i WHERE (n.type = \"item\") AND (n.nid = i.nid) AND (i.parent = '%d') AND (i.link = '%s') AND (n.title = '%s')", $feed->nid, $link, $title);
+    $result = db_query("SELECT n.nid FROM {node} n, {item} i WHERE (n.type = \"item\") AND (n.nid = i.nid) AND (i.parent = '%d') AND (i.link = '%s') AND (n.title = '%s')", $feed->nid, $link, $title);
   }
 
   return db_fetch_object($result);
@@ -286,7 +286,7 @@ function item_page() {
       case "page":
       case "feed":
       default:
-        $result = pager_query("SELECT n.nid AS nid FROM node n, item i WHERE (i.nid = n.nid) AND (n.status = 1) ORDER BY created DESC, title DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+        $result = pager_query("SELECT n.nid AS nid FROM {node} n, {item} i WHERE (i.nid = n.nid) AND (n.status = 1) ORDER BY created DESC, title DESC", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
         if ($op == "feed") {
           item_feed_last($result);
         }
@@ -302,7 +302,7 @@ function item_page() {
 
 function item_import($op) {
   if ($op == "items") {
-    $result = db_query("SELECT n.nid AS nid FROM node n, item i WHERE (i.nid = n.nid) AND (n.status = 1) ORDER BY created DESC, title DESC");
+    $result = db_query("SELECT n.nid AS nid FROM {node} n, {item} i WHERE (i.nid = n.nid) AND (n.status = 1) ORDER BY created DESC, title DESC");
     while ($node = db_fetch_object($result)) {
       $nodes[] = $node->nid;
     }
