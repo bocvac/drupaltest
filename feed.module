@@ -106,7 +106,7 @@ function _feed_pack_fields($node) {
 function feed_insert($node) {
   $data = _feed_pack_fields($node);
 
-  db_query("INSERT INTO {feed} (nid, url, refresh, link, expire, data) VALUES('%d', '%s', '%d', '%s', '%d', '%s')", $node->nid, $node->url, $node->refresh, $node->expire, $node->link, $data);
+  db_query("INSERT INTO {feed} (nid, url, refresh, link, expire, data) VALUES('%d', '%s', '%d', '%s', '%d', '%s')", $node->nid, $node->url, $node->refresh, $node->link, $node->expire, $data);
 }
 
 function feed_update($node) {
