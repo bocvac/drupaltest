@@ -1,9 +1,6 @@
 <?php
 // $Id$
 
-include_once("includes/xmlparser.inc");
-include_once("includes/feedparser.inc");
-
 function feed_system($field) {
   $system["description"] = t("Enables RSS feeds.");
   return $system[$field];
@@ -281,12 +278,14 @@ function feed_view($node, $main = 0) {
 function feed_refresh($feed) {
   $content = _feed_get($feed->url, $feed);
   if ($content != "") {
-    $parser = new feedParser();
-    $info = $parser->parseFeed($content);
+    $info = rss_parse($content);
 
-    if (!isset($info["error"])) {
-      if ($info["item"]) { 
-        foreach (array_reverse($info["item"]) as $item) {
+    if (!$info) {
+      watchdog("error", "while updating ". $feed->title);
+    }
+    else {
+      if (isset($info->items)) { 
+        foreach (array_reverse($info->items) as $item) {
           item_parse($feed, $item);
         }
       }
@@ -294,9 +293,6 @@ function feed_refresh($feed) {
       $feed->changed = time();
 
       node_submit($feed);
-    }
-    else {
-      watchdog("error", "while updating ". $feed->title ." : ". $info["error"]);
     }
   }
 }
@@ -436,17 +432,16 @@ function feed_admin_overview() {
 function feed_add_from_url($url) {
   $tmp_feed = NULL;
   $content = _feed_get($url, $tmp_feed);
-  $parser = new feedParser();
-  $info = $parser->parseFeed($content);
+  $info = rss_parse($content);
 
-  if (isset($info["error"])) {
-    print "Error while parsing XML file " .  $info["error"];
+  if (!$info) {
+    watchdog("error", t("Error while parsing %url", array("%url" => $url)));
   }
   else {
-    $body = $info["channel"]["description"];
-    $created = $info["channel"]["lastbuilddate"] ? $info["channel"]["lastbuilddate"] : time();
-    $ttl = $info["channel"]["ttl"] ? $info["channel"]["ttl"] : 60;
-    $fields = array("type" => "feed", "title" => $info["channel"]["title"], "teaser" => $body, "body" => $body, "status" => 1, "moderate" => "0", "comment" => "0", "promote" => "0", "revision" => "0", "created" => $created, "url" => $url, "link" => $info["channel"]["link"], "items_comment" => "2", "items_promote" => "0", "refresh" => $ttl, "creator" => $info["channel"]["creator"]);
+    $body = $info->description;
+    $created = $info->lastBuildDate ? $info->lastBuildDate : time();
+    $ttl = $info->ttl ? $info->ttl : 60;
+    $fields = array("type" => "feed", "title" => $info->title, "teaser" => $body, "body" => $body, "status" => 1, "moderate" => "0", "comment" => "0", "promote" => "0", "revision" => "0", "created" => $created, "url" => $url, "link" => $info->link, "items_comment" => "2", "items_promote" => "0", "refresh" => $ttl, "creator" => $info->creator);
 
     $node = node_validate($fields, $error);
 
@@ -511,4 +506,224 @@ function feed_import($op) {
     return $sources;
   }
 }
+
+// RSS parse functions
+
+function rss_dcdate_utime($dcdate,$cvttz = 0) {
+  list($date,$time) = explode("T",$dcdate);
+  preg_match("/([0-9]{2}:[0-9]{2}:[0-9]{2})(\-?\+?)([0-9]{2}):([0-9]{2})/", $time, $yo);
+
+  if ($cvttz == 1) {
+    return strtotime($date . " " . $yo[1] . $yo[2] . $yo[3] . $yo[4]);
+  } else {
+    return strtotime($date . " " . $yo[1]);
+  }
+}
+
+function rss_date_utime($adate, $cvttz = 0) {
+  $t = strtotime($adate);
+
+  if ($t == -1) {
+    $t = rss_dcdate_utime($adate, $cvttz);
+  }
+  
+  return $t;
+}
+
+function rss_xml_elemStart($parser, $tag, $attribs) {
+  global $rss;
+
+  switch ($tag) {
+    case "RSS":
+      $rss->_type = 0; // RSS 0.9x, RSS 2.0
+      break;
+    case "HTTP://WWW.W3.ORG/1999/02/22-RDF-SYNTAX-NS#:RDF":
+      $rss->_type = 1; // RSS 1.0
+      break;
+    case "HTTP://PURL.ORG/RSS/1.0/:CHANNEL":
+    case "CHANNEL":
+      $rss->_section = "channel";
+      break;
+    case "HTTP://PURL.ORG/RSS/1.0/:ITEMS":
+    case "HTTP://PURL.ORG/RSS/1.0/:IMAGE":
+    case "IMAGE":
+    case "TEXTINPUT":
+      unset($rss->_section);
+      break;
+    case "HTTP://PURL.ORG/RSS/1.0/:ITEM":
+    case "ITEM":
+      $rss->_section = "item";
+      $rss->_item = array();
+      break;
+    default:
+      $rss->_currentTag = $tag;
+  }
+}
+
+function rss_xml_elemEnd($parser, $tag) {
+  global $rss;
+
+  if (isset($rss->_section) && ($rss->_section != "")) {
+    switch($tag) {
+      case "HTTP://PURL.ORG/RSS/1.0/:ITEM":
+      case "ITEM":
+        unset($rss->_section);
+        if (isset($rss->_item["date"])) {
+          $rss->_item["date"] = rss_date_utime($rss->_item["date"]);
+        }
+        $rss->items[] = $rss->_item;
+        unset($rss->_item);
+        break;
+    }
+  }
+  else {
+    switch ($tag) {
+      case "HTTP://PURL.ORG/RSS/1.0/:CHANNEL":
+      case "CHANNEL":
+        if (isset($rss->date)) {
+          $rss->date = rss_date_utime($rss->date);
+        }
+        if (isset($rss->lastBuildDate)) {
+          $rss->lastBuildDate = rss_date_utime($rss->lastBuildDate);
+        }
+        unset($rss->_section);
+        break;
+      case "HTTP://PURL.ORG/RSS/1.0/:IMAGE":
+      case "IMAGE":
+      case "TEXTINPUT":
+        $rss->_section = "channel";
+        break;
+      case "HTTP://PURL.ORG/RSS/1.0/:ITEMS":
+        unset($rss->_section);
+        break;
+    }
+  }
+
+  unset($rss->_currentTag);
+}
+
+function rss_xml_cdata($parser, $data) {
+  global $rss;
+
+  if (isset($rss->_section) && ($rss->_section != "") && (isset($rss->_currentTag)) && ($rss->_currentTag != "") && ($data != "")) {
+    switch ($rss->_section) {
+      case "channel":
+        $tag = _rss_xml_channel_tagtr($rss->_currentTag);
+        if ($tag != "") {
+          $rss->$tag .= $data;
+        }
+        break;
+      case "item":
+        $tag = _rss_xml_item_tagtr($rss->_currentTag);
+        if ($tag != "") {
+          $rss->_item[$tag] .= $data;
+        }
+        break;
+    }
+  }
+}
+
+function _rss_xml_channel_tagtr($tag) {
+  switch ($tag) {
+    case "TITLE":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:SUBJECT":
+    case "HTTP://PURL.ORG/RSS/1.0/:TITLE":
+      return "title";
+      break;
+    case "LINK":
+    case "HTTP://PURL.ORG/RSS/1.0/:LINK":
+      return "link";
+      break;
+    case "DESCRIPTION":
+    case "HTTP://PURL.ORG/RSS/1.0/:DESCRIPTION":
+      return "description";
+      break;
+    case "LANGUAGE":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:LANGUAGE":
+      return "language";
+      break;
+    case "COPYRIGHT":
+      return "copyright";
+      break;
+    case "MANAGINGEDITOR":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:PUBLISHER":
+      return "publisher";
+      break;
+    case "WEBMASTER":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:CREATOR":
+      return "creator";
+      break;
+    case "PUBDATE":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:DATE":
+      return "date";
+      break;
+    case "LASTBUILDDATE":
+      return "lastBuildDate";
+      break;
+    case "GENERATOR":
+    case "HTTP://WEBNS.NET/MVCB/:GENERATORAGENT":
+      return "generator";
+      break;
+    case "TTL":
+      return "ttl";
+      break;
+    case "RATING":
+      return "rating";
+      break;
+    default:
+      return "";
+  }
+}
+
+function _rss_xml_item_tagtr($tag) {
+  switch ($tag) {
+    case "TITLE":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:SUBJECT":
+    case "HTTP://PURL.ORG/RSS/1.0/:TITLE":
+      return "title";
+      break;
+    case "LINK":
+    case "HTTP://PURL.ORG/RSS/1.0/:LINK":
+      return "link";
+      break;
+    case "DESCRIPTION":
+    case "HTTP://PURL.ORG/RSS/1.0/:DESCRIPTION":
+      return "description";
+      break;
+    case "AUTHOR":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:CREATOR":
+      return "creator";
+      break;
+    case "COMMENTS":
+      return "comments";
+      break;
+    case "GUID":
+      return "guid";
+      break;
+    case "PUBDATE":
+    case "HTTP://PURL.ORG/DC/ELEMENTS/1.1/:DATE":
+      return "date";
+      break;
+    default:
+      return "";
+  }
+}
+
+function rss_parse($text) {
+  global $rss;
+
+  $rss = new StdClass;
+
+  $parser = xml_parser_create_ns();
+  xml_set_element_handler($parser, "rss_xml_elemStart", "rss_xml_elemEnd");
+  xml_set_character_data_handler($parser, "rss_xml_cdata");
+  xml_parser_set_option($parser, XML_OPTION_TARGET_ENCODING, "utf-8");
+  if (!xml_parse($parser, $text, 1)) {
+    return false;
+  }
+  xml_parser_free($parser);
+
+  return $rss;
+}
+
 ?>
