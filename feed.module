@@ -51,6 +51,10 @@ function feed_access($op, $node) {
 function feed_get_fields($op = '', $node = 0) {
   $fields =  array("creator", "last_mod", "etag", "items_promote");
 
+  if (module_exist("queue")) {
+    $fields[] = "items_moderate";
+  }
+  
   if (module_exist("comment")) {
     $fields[] = "items_comment";
   }
@@ -187,6 +191,11 @@ function _feed_get($url, &$feed) {
 function feed_form_fields(&$node, &$help, &$error) {
   $output = form_select(t("Auto-promotion of news item is"), "items_promote", $node->items_promote, array(t("Disabled"), t("Enabled")));
 
+  if (module_exist("queue")) {
+    $output .= form_select(t("Moderation of news item"), "items_moderate", $node->items_moderate, array(("Disabled"), t("Enabled")));
+  }
+  
+
   if (module_exist("comment")) {
     $output .= form_select(t("Allow user comments on news items"), "items_comment", $node->items_comment, array(("Disabled"), t("Read only"), t("Read-write")));
   }
@@ -270,6 +279,7 @@ function feed_view($node, $main = 0) {
 }
 
 function feed_refresh($feed) {
+
   $content = _feed_get($feed->url, $feed);
   if ($content != "") {
     $info = rss_parse($content);
