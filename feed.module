@@ -238,9 +238,9 @@ function feed_link($type, $node = 0, $main = 0) {
 function feed_theme_header($node) {
 
 
-  $output = t("<p><b>Website:</b><div style=\"margin-left: 20px\"><a href=\"%url\" target=\"_blank\">%url</a></div></p>\n", array("%url" => $node->link));
-  $output .= t("<p><b>Description:</b><div style=\"margin-left: 20px\">%descr</div>\n", array("%descr" => check_output($node->body, 1)));
-  $output .= t("<p><b>Last update:</b><div style=\"margin-left: 20px\">%time ago</div></p>\n", array("%time" => format_interval(time() - $node->changed)));
+  $output = t("<p><b>Website:</b><div style=\"margin-left: 20px\"><a href=\"%url\" target=\"_blank\">%url</a></div></p><br />\n", array("%url" => $node->link));
+  $output .= t("<p><b>Description:</b><div style=\"margin-left: 20px\">%descr</div><br />\n", array("%descr" => check_output($node->body, 1)));
+  $output .= t("<p><b>Last update:</b><div style=\"margin-left: 20px\">%time ago</div></p><br />\n", array("%time" => format_interval(time() - $node->changed)));
   $output .= "<div align=\"right\"><a href=\"$node->url\"><img src=\"". theme("image", "xml.gif") ."\" width=\"36\" height=\"14\" align=\"right\" border=\"0\" /></a></div>\n";
   $output .= "<div>". theme("links", link_node($node, 0)) ."</div>";
 
