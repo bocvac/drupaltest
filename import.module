@@ -1,24 +1,31 @@
 <?php
 // $Id$
-
-
-function import_system($field) {
-  $system["description"] = t("The import module is a central place where all imported content comes together.");
-  return $system[$field];
-}
-
 function import_perm() {
   return array("access import");
 }
 
 function import_link($type, $node = 0, $main = 0) {
+  global $user;
+  
   if ($type == "system" && user_access("access import")) {
     if (!module_exist("feed") || !module_exist("item")) {
       menu("import", t("news aggregator"), "import_page_error", 0);
     }
+    elseif (user_access("edit own feed")) {
+      menu("node/add/feed", t("news feed"), "node_page", 0);
+      menu("import", t("news aggregator"), "import_page_latest", 0);
+      menu("import/user", t("news feeds"), "import_page_user", 0, MENU_HIDE);
+      menu("import/user/". $user->uid, t("my feeds"), "import_page_user", 1);
+      menu("import/sources", t("news by source"), "import_page_sources", 0);
+      if (module_exist("taxonomy_dhtml")) {
+        menu("import/categories/item", t("categories"), "import_categories", 0);
+        menu("import/categories/feed", t("sources by category"), "import_categories", 0);
+      }
+    }
     else {
       menu("import", t("news aggregator"), "import_page_latest", 0);
       menu("import/sources", t("news by source"), "import_page_sources", 0);
+      menu("import/user", t("news feeds"), "import_page_user", 0, MENU_HIDE);
       if (module_exist("taxonomy_dhtml")) {
         menu("import/categories/item", t("categories"), "import_categories", 0);
         menu("import/categories/feed", t("sources by category"), "import_categories", 0);
@@ -65,6 +72,28 @@ function theme_import_source($node) {
   return theme("node", $node, 1);
 }
 
+function import_page_user() {
+  $uid = arg(2);
+  
+  if(!is_numeric($uid)) {
+    print drupal_not_found();
+    return;
+  }
+  
+  $nids = module_invoke_all("import", "sources");
+  if ($nids) {
+    $result = pager_query("SELECT nid FROM {node} n LEFT JOIN {users} u ON u.uid = n.uid WHERE u.uid = $uid AND n.nid IN (". implode(",", $nids) .") ORDER BY title, nid", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+  }
+  
+  while ($import_source = db_fetch_object($result)) {
+    $output .= theme("import_source", node_load(array("nid" => $import_source->nid)));
+  }
+
+  $output .= theme("pager", "", ($user->nodes ? $user->nodes : variable_get("default_nodes_main", 10)), 0);
+
+  print theme("page", $output);
+}
+
 function import_page_sources() {
   $nids = module_invoke_all("import", "sources");
   if ($nids) {
@@ -82,5 +111,14 @@ function import_page_sources() {
 
 function import_page_error() {
   print theme("page", theme("error", t("For the import module to function properly please ensure that both the feed and item modules are enabled in the ". l(t("modules configuration"), "admin/system/modules") ." page.")));
+}
+
+function import_user($type, $edit, &$user) {
+  // What type of registration action are we taking?
+  switch ($type) {
+    case "view_public":
+    case "view_private":
+      return form_item(t("Import"), l(t("view personal feeds"), "import/user/$user->uid", array("title" => t("Read %username's latest blog entries.", array("%username" => $user->name)))));
+     }
 }
 ?>
