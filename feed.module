@@ -408,14 +408,14 @@ function feed_admin() {
     else {
       switch ($edit["op"]) {
         case t("Add feed"):
-          feed_add_from_url($edit["url"]);
+          feed_add_from_url($edit["url"], $edit["update"]);
           break;
         case t("Refresh"):
           feed_refresh(node_load(array("nid" => $edit["nid"])));
           break;
       }
       $add_form = form_textfield(t("URL"), "url", $edit["url"], 50, 255, t("The URL to the RSS/RDF file"));
-      $add_form .= form_checkbox(t("Automatically refresh"), "update", $edit["update"], 1);
+      $add_form .= form_checkbox(t("Automatically refresh"), "update", 1, 1);
       $add_form .= form_submit(t("Add feed"), "edit[op]");
       $output .= form($add_form, "post", url("admin/system/feeds"));
 
@@ -453,7 +453,7 @@ function feed_get_feeds() {
   return $nodes;
 }
 
-function feed_add_from_url($url) {
+function feed_add_from_url($url, $refresh = 0) {
   $tmp_feed = NULL;
   $content = _feed_get($url, $tmp_feed);
   $info = rss_parse($content);
@@ -489,7 +489,12 @@ function feed_add_from_url($url) {
       if (node_access("create", $node)) {
         $nid = node_save($node, array_merge($fields, module_invoke($node->type, "save", "create", $node)));
         if ($nid) {
-          $output .= drupal_set_message("feed successfully added.");
+          if ($refresh) {
+            feed_refresh(node_load(array("nid" => $nid)));
+          }
+          else {
+            drupal_set_message("feed successfully added.");
+          }
         }
         else {
           watchdog("error", "could not create news item");
