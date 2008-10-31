@@ -65,7 +65,7 @@ function import_cron() {
   }
   $timer_duration = time() - $start_timer;
   //dpm('Importing took '. $timer_duration .' seconds.');
-  //dpm('Getting old user from sportingnews_users took '. $total_get_old_user .' seconds.');
+  //dpm('Getting old user from old_users took '. $total_get_old_user .' seconds.');
   //dpm('Import of just users was '. $total_user_save .' seconds');
   //dpm('Import of profile_value rows was '. $total_profile_save .' seconds.');
   //dpm('Talking to import_pass/fail was '. $total_import_save .' seconds.');
