@@ -1,0 +1,6 @@
+; $Id$
+name = Import Node
+description = "Imports Node data using import api."
+dependencies[] = import
+package = Import
+core = 6.x

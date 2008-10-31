@@ -1,0 +1,112 @@
+<?php
+// $Id$
+
+/**
+ * creates hook_import
+ */
+function import_stage_import() {
+  module_invoke_all('import_stage');
+  return;
+}
+/**
+ * creates hook_import
+ */
+function import_process_import($data) {
+  module_invoke_all('import_process',$data);
+  return;
+}
+/*
+ * Implementation of hook_menu().
+ */
+function import_menu() {
+  $items = array();
+  $items['admin/settings/import'] = array(
+    'title' => 'Import',
+    'description' => 'Settings for Import.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('import_settings'),
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer nodes'),
+  );
+  return $items;
+}
+
+/**
+ * Stages content into {import}
+ *
+ * @param array $args accepts $args['impid'] and $args['type']
+ */
+function import_stage($args) {
+  if(array_key_exists('impid',$args) && array_key_exists('type',$args)) {
+    db_query("INSERT INTO {import} VALUES('%s', '%s')", $args['impid'], $args['type']);
+  } else {
+    drupal_set_message(t("There was an error staging your data.  Please provide an array with impid and type keys."));
+  }
+  return;
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function import_cron() {
+  global $total_user_save, $total_profile_save, $total_import_save, $total_user_import, $total_get_old_user;
+  $total_user_save = 0;
+  $total_profile_save = 0;
+  $total_import_save = 0;
+  $total_user_import = 0;
+  $total_get_old_user = 0;
+  $start_timer = time();
+  // first stage all data
+  import_stage_import();
+  //dpm('Staging took '. (time() - $start_timer) .' seconds.');
+  $result = db_query_range("Select impid, type from {import}", 0, variable_get("import_per_cron",50));
+  while ($row = db_fetch_object($result)) {
+    import_process_import($row);
+  }
+  $timer_duration = time() - $start_timer;
+  //dpm('Importing took '. $timer_duration .' seconds.');
+  //dpm('Getting old user from sportingnews_users took '. $total_get_old_user .' seconds.');
+  //dpm('Import of just users was '. $total_user_save .' seconds');
+  //dpm('Import of profile_value rows was '. $total_profile_save .' seconds.');
+  //dpm('Talking to import_pass/fail was '. $total_import_save .' seconds.');
+  //dpm(t('Total of calls to import function: @time seconds', array('@time' => $total_user_import)));
+}
+
+/**
+ * a modified version of
+ *
+ * @param object $node
+ * @param string $msg
+ * @todo implement message
+ */
+function import_pass($data, $msg='') {
+  db_query("INSERT INTO {import_pass} VALUES('%s', '%s')", $data->impid, $data->type);
+  db_query("DELETE from {import} where impid = '%s'", $data->impid);
+}
+
+/**
+ * a modified version of
+ *
+ * @param object $node
+ * @param string $msg
+ * @todo implement message
+ */
+function import_fail($data, $msg='') {
+  db_query("INSERT INTO {import_fail} VALUES('%s','%s','%s')", $data->impid, $data->type, $msg);
+  db_query("DELETE from {import} where impid = '%s'", $data->impid);
+}
+
+/**
+ * Implementation of hook_settings
+ */
+function import_settings() {
+  $form['import_per_cron'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Number of items to process per cron'),
+    '#size' => 10,
+    '#maxlength' => 20,
+    '#required' => true,
+    '#default_value' => variable_get('import_per_cron', 50),
+  );
+  return system_settings_form($form);
+}

@@ -1,0 +1,6 @@
+; $Id$
+name = Import Roles
+description = "Imports Role data from an existing Drupal installation using import api."
+dependencies[] = import
+package = Import
+core = 6.x

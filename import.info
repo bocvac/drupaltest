@@ -1,0 +1,5 @@
+; $Id$
+name = Import
+description = "Imports content into nodes."
+package = Import
+core = 6.x

@@ -1,0 +1,19 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ *
+ * Remove the variables, nodes and schema corresponding to the module.
+ */
+function import_role_install() {
+  define('IMPORT_ROLE_STAGED', FALSE);
+}
+/**
+ * Implementation of hook_uninstall().
+ *
+ * Remove the variables, nodes and schema corresponding to the module.
+ */
+function import_role_uninstall() {
+  variable_del('import_role_staged');
+}
