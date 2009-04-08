@@ -2,17 +2,29 @@
 // $Id$
 
 /**
- * creates hook_import
+ * invokes hook_import()
  */
 function import_stage_import() {
   module_invoke_all('import_stage');
   return;
 }
 /**
- * creates hook_import
+ * invokes hook_import_process() and contains a context variable for use with
+ * the batch api
+ *
+ * @param $data
+ *   An array containing the following keys that correspond to data staged in
+ *   the {import} table:
+ *    - impid
+ *    - type
+ *
+ * @param $context
+ *   The context array used for batch processing
+ *  
  */
-function import_process_import($data) {
+function import_process_import($data, &$context) {
   module_invoke_all('import_process',$data);
+  $context['message'] = t('Processing import') .' '. $data->type .' '. $data->impid;
   return;
 }
 /*
@@ -20,11 +32,10 @@ function import_process_import($data) {
  */
 function import_menu() {
   $items = array();
-  $items['admin/settings/import'] = array(
+  $items['admin/build/import'] = array(
     'title' => 'Import',
-    'description' => 'Settings for Import.',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('import_settings'),
+    'page arguments' => array('import_admin_form'),
     'type' => MENU_NORMAL_ITEM,
     'access arguments' => array('administer nodes'),
   );
@@ -34,7 +45,8 @@ function import_menu() {
 /**
  * Stages content into {import}
  *
- * @param array $args accepts $args['impid'] and $args['type']
+ * @param $args
+ *   An array that accepts $args['impid'] and $args['type']
  */
 function import_stage($args) {
   if(array_key_exists('impid',$args) && array_key_exists('type',$args)) {
@@ -46,37 +58,13 @@ function import_stage($args) {
 }
 
 /**
- * Implementation of hook_cron().
- */
-function import_cron() {
-  global $total_user_save, $total_profile_save, $total_import_save, $total_user_import, $total_get_old_user;
-  $total_user_save = 0;
-  $total_profile_save = 0;
-  $total_import_save = 0;
-  $total_user_import = 0;
-  $total_get_old_user = 0;
-  $start_timer = time();
-  // first stage all data
-  import_stage_import();
-  //dpm('Staging took '. (time() - $start_timer) .' seconds.');
-  $result = db_query_range("Select impid, type from {import}", 0, variable_get("import_per_cron",50));
-  while ($row = db_fetch_object($result)) {
-    import_process_import($row);
-  }
-  $timer_duration = time() - $start_timer;
-  //dpm('Importing took '. $timer_duration .' seconds.');
-  //dpm('Getting old user from old_users took '. $total_get_old_user .' seconds.');
-  //dpm('Import of just users was '. $total_user_save .' seconds');
-  //dpm('Import of profile_value rows was '. $total_profile_save .' seconds.');
-  //dpm('Talking to import_pass/fail was '. $total_import_save .' seconds.');
-  //dpm(t('Total of calls to import function: @time seconds', array('@time' => $total_user_import)));
-}
-
-/**
- * a modified version of
+ * A function menat to be called by modules implementing the Import API to
+ * indicate success of an imported item.
  *
- * @param object $node
- * @param string $msg
+ * @param $data
+ *   An array containing impid and type so that we know what we are working with.
+ * @param $msg
+ *   A string that serves as an optional message to associate with succesful import.
  * @todo implement message
  */
 function import_pass($data, $msg='') {
@@ -85,11 +73,13 @@ function import_pass($data, $msg='') {
 }
 
 /**
- * a modified version of
+ * A function menat to be called by modules implementing the Import API to
+ * indicate failure of an imported item.
  *
- * @param object $node
- * @param string $msg
- * @todo implement message
+ * @param $data
+ *   An array containing impid and type so that we know what we are working with.
+ * @param $msg
+ *   A string that serves as an optional message to associate with succesful import.
  */
 function import_fail($data, $msg='') {
   db_query("INSERT INTO {import_fail} VALUES('%s','%s','%s')", $data->impid, $data->type, $msg);
@@ -97,16 +87,51 @@ function import_fail($data, $msg='') {
 }
 
 /**
- * Implementation of hook_settings
+ * Generates a form containing the stage and process buttons for admins to use.
  */
-function import_settings() {
-  $form['import_per_cron'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Number of items to process per cron'),
-    '#size' => 10,
-    '#maxlength' => 20,
-    '#required' => true,
-    '#default_value' => variable_get('import_per_cron', 50),
+function import_admin_form() {
+  $form['stage'] = array(
+    '#type' => 'button',
+    '#value' => t('Stage Data for Import'),
+    '#executes_submit_callback' => TRUE
   );
-  return system_settings_form($form);
+  $form['process'] = array(
+    '#type' => 'button',
+    '#value' => t('Process Import'),
+    '#executes_submit_callback' => TRUE
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for the import_admin_form
+ */ 
+function import_admin_form_submit($form, &$form_state) {
+  $import = db_fetch_object(db_query("SELECT count(impid) as total FROM {import}"));
+  if ($form_state['clicked_button']['#value'] == t('Stage Data for Import')) {
+    import_stage_import();
+    $import = db_fetch_object(db_query("SELECT count(impid) as total FROM {import}"));
+    drupal_set_message(t('%total items are staged for Import', array('%total' => $import->total)));
+  }
+  elseif ($form_state['clicked_button']['#value'] == t('Process Import')) {
+    if($import->total > 0) {
+      $operations = array();
+      $result = db_query("Select impid, type from {import}");
+      while ($row = db_fetch_object($result)) {
+         $operations[] = array('import_process_import', array($row)); 
+      }
+      $batch = array(
+        'operations' => $operations,
+        'title' => t('Importing'),
+        'init_message' => t('Import is starting to process %total items', array('%total' => $import->total)),
+        'progress_message' => t('Processed @current out of @total.'),
+        'error_message' => t('Import has encountered an error.'),
+      );
+  
+      batch_set($batch);
+    }
+    else {
+    drupal_set_message(t('%total items are staged for Import', array('%total' => $import->total)));
+    }
+  }
 }

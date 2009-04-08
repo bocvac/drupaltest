@@ -4,73 +4,91 @@
 /**
  * @file
  * An example use case for the import API written to import users from an
- * existing Drupal installation.
+ * existing Drupal installation.  Pulls in one profile field.
  *
- * In order for this to work you will likely need to setup a second datasource
- * in settings.php to perform the selects from.
+ * In lieu of a second data source we will be pulling from an internal test
+ * table.  A common scenario for imports would involve a second database.
+ * Comments below illustrate where you would normally switch datasources.
  */
 
 /**
- * hook_import_stage()
+ * Implementation of hook_import_stage()
  *
  */
 function import_user_import_stage() {
-  if(variable_get('import_user_staged',FALSE) == FALSE) {
+  
+  // The import_user_staged variable is set to false during the installation of
+  // this module.
+  if (variable_get('import_user_staged', FALSE) == FALSE) {
 
-    // select all of the old uids we will be importing.  Use the datasource
-    // we are importing from
+    // select all of the old uids we will be importing.  If you were importing
+    // from an external datasource you would use db_set_active() to switch
+    // before running the select statement.
 
-    db_set_active('old');
-    $sql = "SELECT uid from users";
+    $sql = "SELECT id from {import_example_user}";
     $result = db_query($sql);
-    db_set_active('default');
 
     while ($user = db_fetch_object($result)) {
 
       // create an array containing identifier and type both of which are used in
-      // this modules process hook
+      // this modules process hook.  The type is an arbitrary identifer the
+      // developer can use to easily identify which type of data is referenced.
+      // The type chosen by the developer will get passed to this modules
+      // implementation of hook_import_process.
 
       $attr = array();
-      $attr['impid'] = $user->uid;
+      $attr['impid'] = $user->id;
       $attr['type'] = 'user';
 
       // pass the array to the import_stage method
 
       import_stage($attr);
     }
+    
     // set this variable to true to eliminate restaging the data
-
-    variable_set('import_user_staged',TRUE);
+    variable_set('import_user_staged', TRUE);
   }
 }
 
+/**
+ * Implementation hook_import_process()
+ */
 function import_user_import_process($data) {
-  drupal_set_message("import_user_import_process");
-  if($data->type == 'user') {
-    db_set_active('old');
-    // get the old users data
-    db_set_active('old');
-    $sql = "SELECT uid, name, pass, mail, mode, sort, threshold, theme, ".
-           "signature, created, access, login, status, timezone, language, ".
-           "picture, init, data from users where uid = %d";
-    $sql_insert = "INSERT into users(name, pass, mail, mode, sort, threshold, ".
-      "theme, signature, created, access, login, status, timezone, language, ".
-      "picture, init, data) values('%s','%s','%s',%d, %d, %d, '%s', '%s', %d, ".
-      "%d, %d, %d, '%s', '%s', '%s', '%s', '%s')";
-    $user = db_fetch_object(db_query($sql,$data->impid));
-    db_set_active('defualt');
-    $status = FALSE;
-    if($user->uid > 0) {
-      $status = db_query($sql_insert,$user->name, $user->pass, $user->mail,
-        $user->mode, $user->sort, $user->threshold, $user->theme,
-        $user->signature, $user->created, $user->access, $user->login,
-        $user->status, $user->timezone, $user->language, $user->picture,
-        $user->init, $user->data);
-    }
-    if($status == FALSE) {
-      import_fail($data,'User Import failed'.print_r($user,true));
-    } else {
-      import_pass($data,'User Import failed'.print_r($user,true));
-    }
+  switch ($data->type) {
+    case 'user':
+      $new_user = _import_user_map_data($data);
+      $obj = new stdClass();
+      $account = user_save($obj, $new_user);
+      if ($account === FALSE) {
+        import_fail($data, 'User Import failed'. print_r($new_user, TRUE));
+      }
+      else {
+        import_pass($data, 'User Import passed'. print_r($account, TRUE));
+      }
+      break;
   }
+}
+
+/**
+ * Helper function to map the old data to a Drupal user object;
+ */
+function _import_user_map_data($data) {
+
+  // First we need to select the old record we are dealing with.  Normally this
+  // would be done by using db_set_active() to switch datasources.
+  $sql_old_user = "SELECT id, email, name, random_username, random_password from {import_example_user} WHERE id = %d";
+  $old_user = db_fetch_object(db_query($sql_old_user, $data->impid));
+  
+  $account = array();
+  
+  $account['status'] = 1;
+  $account['roles'] = array(DRUPAL_AUTHENTICATED_RID);
+  $account['name'] = $old_user->random_username;
+  $account['mail'] = $old_user->email;
+  $account['pass'] = $old_user->random_password;
+  $account['profile_name'] = $old_user->name;
+  $account['profile_original_id'] = $old_user->id;
+  
+  return $account;
+
 }
