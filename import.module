@@ -69,7 +69,7 @@ function import_stage($args) {
  */
 function import_pass($data, $msg='') {
   db_query("INSERT INTO {import_pass} VALUES('%s', '%s')", $data->impid, $data->type);
-  db_query("DELETE from {import} where impid = '%s'", $data->impid);
+  db_query("DELETE from {import} where impid = '%s' AND type = '%s'", $data->impid,  $data->type);
 }
 
 /**
@@ -83,7 +83,7 @@ function import_pass($data, $msg='') {
  */
 function import_fail($data, $msg='') {
   db_query("INSERT INTO {import_fail} VALUES('%s','%s','%s')", $data->impid, $data->type, $msg);
-  db_query("DELETE from {import} where impid = '%s'", $data->impid);
+  db_query("DELETE from {import} where impid = '%s' AND type = '%s'", $data->impid,  $data->type);
 }
 
 /**
@@ -95,11 +95,22 @@ function import_admin_form() {
     '#value' => t('Stage Data for Import'),
     '#executes_submit_callback' => TRUE
   );
-  $form['process'] = array(
-    '#type' => 'button',
-    '#value' => t('Process Import'),
-    '#executes_submit_callback' => TRUE
-  );
+  
+  // only display the import buttons if there is something staged for import
+  $import = db_query("SELECT DISTINCT type from {import}");
+  $types = array();
+  while ($row = db_fetch_object($import)) {
+    $types[] = $row->type;
+  }
+  if (count($types) > 0) {
+    foreach ($types as $type) {
+      $form['process_'. $type] = array(
+        '#type' => 'button',
+        '#value' => t('Process') .' '. $type,
+        '#executes_submit_callback' => TRUE
+      );
+    }
+  }
   return $form;
 }
 
@@ -107,23 +118,26 @@ function import_admin_form() {
  * Submit handler for the import_admin_form
  */ 
 function import_admin_form_submit($form, &$form_state) {
-  $import = db_fetch_object(db_query("SELECT count(impid) as total FROM {import}"));
+
   if ($form_state['clicked_button']['#value'] == t('Stage Data for Import')) {
     import_stage_import();
     $import = db_fetch_object(db_query("SELECT count(impid) as total FROM {import}"));
     drupal_set_message(t('%total items are staged for Import', array('%total' => $import->total)));
   }
-  elseif ($form_state['clicked_button']['#value'] == t('Process Import')) {
+  else {
+    $type_array = explode(' ', $form_state['clicked_button']['#value']);
+    $type = array_pop($type_array);
+    $import = db_fetch_object(db_query("SELECT count(impid) as total FROM {import} WHERE type = '%s'", $type));
     if($import->total > 0) {
       $operations = array();
-      $result = db_query("Select impid, type from {import}");
+      $result = db_query("Select impid, type from {import} WHERE type = '%s'", $type);
       while ($row = db_fetch_object($result)) {
          $operations[] = array('import_process_import', array($row)); 
       }
       $batch = array(
         'operations' => $operations,
         'title' => t('Importing'),
-        'init_message' => t('Import is starting to process %total items', array('%total' => $import->total)),
+        'init_message' => t('Import is starting to process %total %type items', array('%total' => $import->total, '%type' => $type)),
         'progress_message' => t('Processed @current out of @total.'),
         'error_message' => t('Import has encountered an error.'),
       );

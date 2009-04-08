@@ -84,7 +84,7 @@ function _import_user_insert_data() {
   $sql_profile_field = "INSERT INTO {profile_fields} (title, name, explanation, category, type, weight, required, register, visibility, autocomplete, options, page) VALUES ('%s', '%s', '%s', '%s', '%s', %d, %d, %d, %d, %d, '%s', '%s')";
   
   // insert 100 random users to be imported
-  _import_user_generate_random_user(100);
+  _import_user_generate_random_user(10);
   
   // Create example profile fields
   db_query($sql_profile_field, 'Name', 'profile_name', '', 'Personal Information', 'textfield', 0, 0, 0, 2, 0, '', '');
@@ -132,7 +132,6 @@ function _import_user_delete_data() {
   db_query("DELETE FROM {profile_fields} WHERE fid = %d", $original_id_field->fid);
   db_query("DELETE FROM {profile_values} WHERE fid = %d", $name_field->fid);
   db_query("DELETE FROM {profile_values} WHERE fid = %d", $original_id_field->fid);
-  db_query("DELETE FROM {import} WHERE type = '%s'", 'user');
   
   // Clean up users that were created during this import
   $imported_users = db_query("SELECT uid FROM {users} WHERE data LIKE '%%%s%%'", 'profile_original_id');
@@ -141,7 +140,7 @@ function _import_user_delete_data() {
   }
   
   // delete from import tables
-  db_query("DELETE FROM {import_pass} WHERE type = '%s'", 'user');
+  db_query("DELETE FROM {import} WHERE type = '%s'", 'user');
   db_query("DELETE FROM {import_pass} WHERE type = '%s'", 'user');
   db_query("DELETE FROM {import_fail} WHERE type = '%s'", 'user');
   

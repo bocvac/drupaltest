@@ -1,5 +1,88 @@
 <?php
+// $Id$
 
-function import_node_import_process($data) {
+/**
+ * @file
+ * An example use case for the import API written to import content from an
+ * existing Drupal installation.  Pulls in one cck field.
+ *
+ * In lieu of a second data source we will be pulling from an internal test
+ * table.  A common scenario for imports would involve a second database.
+ * Comments below illustrate where you would normally switch datasources.
+ */
+
+/**
+ * Implementation of hook_import_stage()
+ *
+ */
+function import_node_import_stage() {
   
+  // The import_node_staged variable is set to false during the installation of
+  // this module.
+  if (variable_get('import_node_staged', FALSE) == FALSE) {
+
+    // select all of the old ids we will be importing.  If you were importing
+    // from an external datasource you would use db_set_active() to switch
+    // before running the select statement.
+
+    $sql = "SELECT id from {import_example_node}";
+    $result = db_query($sql);
+
+    while ($content = db_fetch_object($result)) {
+
+      // create an array containing identifier and type both of which are used in
+      // this modules process hook.  The type is an arbitrary identifer the
+      // developer can use to easily identify which type of data is referenced.
+      // The type chosen by the developer will get passed to this modules
+      // implementation of hook_import_process.
+
+      $attr = array();
+      $attr['impid'] = $content->id;
+      $attr['type'] = 'node';
+
+      // pass the array to the import_stage method
+
+      import_stage($attr);
+    }
+    
+    // set this variable to true to eliminate restaging the data
+    variable_set('import_node_staged', TRUE);
+  }
+}
+
+/**
+ * Implementation hook_import_process()
+ */
+function import_node_import_process($data) {
+  switch ($data->type) {
+    case 'node':
+      $new_node = _import_node_map_data($data);
+      node_save($new_node);
+
+      import_pass($data, 'Node Import passed'. print_r($node, TRUE));
+      break;
+  }
+}
+
+/**
+ * Helper function to map the old data to a Drupal user object;
+ */
+function _import_node_map_data($data) {
+  global $user;
+  // First we need to select the old record we are dealing with.  Normally this
+  // would be done by using db_set_active() to switch datasources.
+  $sql_old_content = "SELECT id, headline, body, author FROM {import_example_node} WHERE id = %d";
+  $old_content = db_fetch_object(db_query($sql_old_content, $data->impid));
+  
+  $node->uid = $user->uid;
+  $node->type = 'example_node';
+  $node->status = 1;
+  $node->comment = 0;
+  $node->promote = 0;
+  $node->moderate = 0;
+  $node->sticky = 0;
+  $node->title = $old_content->headline;
+  $node->body = $old_content->body;
+  $node->field_original_author = array(0 => array('value' => $old_content->author));
+  return $node;
 }
