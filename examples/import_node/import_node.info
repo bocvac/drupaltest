@@ -4,5 +4,6 @@ description = "An example of using the Import API to import content. Illustrates
 dependencies[] = import
 dependencies[] = content
 dependencies[] = content_copy
+dependencies[] = text
 package = Import
 core = 6.x
