@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 function feed_system($field) {
   $system["description"] = t("Enables RSS feeds.");

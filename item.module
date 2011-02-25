@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 function item_system($field) {
   $system["description"] = t("Enables items for feeds.");
