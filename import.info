@@ -1,4 +1,14 @@
 name = Import
-description = "Imports content into nodes."
-package = Import
-core = 6.x
+description = Migration base classes for entity imports.
+core = 7.x
+package = Lightning
+version = 7.x-1.0
+project = import
+dependencies[] = ctools
+dependencies[] = entity
+dependencies[] = migrate
+dependencies[] = migrate_extras
+dependencies[] = migrate_ui
+files[] = import.base.nodes.inc
+files[] = import.base.terms.inc
+files[] = import.base.users.inc

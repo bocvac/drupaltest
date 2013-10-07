@@ -1,6 +1,0 @@
-name = Example User Import
-description = "An example of using the Import API to import users.  Illustrates the use of a custom profile field."
-dependencies[] = import
-dependencies[] = profile
-package = Import
-core = 6.x
