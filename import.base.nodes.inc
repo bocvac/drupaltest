@@ -35,7 +35,7 @@ class ImportBaseNodes extends Migration {
     $this->addFieldMapping('language', 'language')->defaultValue('en');
     $this->addFieldMapping('title', 'title');
     $this->addFieldMapping('body', 'body');
-    $this->addFieldMapping('body:format')->defaultValue('full_html');
+    $this->addFieldMapping('body:format')->defaultValue('filtered_html');
   }
 
   function csvcolumns() {
