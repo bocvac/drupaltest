@@ -7,8 +7,8 @@
 
 class ImportBaseNodes extends Migration {
 
-  public function __construct($arguments = array()) {
-    parent::__construct($arguments = array());
+  public function __construct($arguments) {
+    parent::__construct($arguments);
     $this->description = t('Import nodes.');
 
     // Create a map object for tracking the relationships between source rows
