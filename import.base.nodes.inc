@@ -28,7 +28,7 @@ class ImportBaseNodes extends Migration {
     // Create a MigrateSource object.
     $this->source = new MigrateSourceCSV($import_path . 'import.base.nodes.csv', $this->csvcolumns(), array('header_rows' => 1));
 
-    $this->destination = new MigrateDestinationNode('page');
+    $this->destination = new MigrateDestinationNode('article');
 
     $this->addFieldMapping('uid', 'uid')->defaultValue(1);
     $this->addFieldMapping('status', 'status')->defaultValue(1);

@@ -9,6 +9,7 @@ dependencies[] = entity
 dependencies[] = migrate
 dependencies[] = migrate_extras
 dependencies[] = migrate_ui
+files[] = import.base.comments.inc
 files[] = import.base.nodes.inc
 files[] = import.base.terms.inc
 files[] = import.base.users.inc
