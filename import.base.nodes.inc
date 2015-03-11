@@ -23,10 +23,14 @@ class ImportBaseNodes extends Migration {
       MigrateDestinationNode::getKeySchema()
     );
 
-    $import_path = drupal_get_path('module', 'import') . '/import/';
-
     // Create a MigrateSource object.
-    $this->source = new MigrateSourceCSV($import_path . 'import.base.nodes.csv', $this->csvcolumns(), array('header_rows' => 1));
+    if (isset($arguments['path'])) {
+      $import_path = $arguments['path'];
+    }
+    else {
+      $import_path = drupal_get_path('module', 'import') . '/import/import.base.nodes.csv';
+    }
+    $this->source = new MigrateSourceCSV($import_path, $this->csvcolumns(), array('header_rows' => 1));
 
     $this->destination = new MigrateDestinationNode('article');
 
