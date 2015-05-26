@@ -1,0 +1,18 @@
+id: import_node_base
+label: Import nodes
+source:
+  plugin: csv
+  header_rows: 1
+  keys:
+    - title
+  csvColumns:
+    0: title
+    1: body
+destination:
+  plugin: entity:node
+process:
+  type:
+    plugin: default_value
+    default_value: article
+  title: title
+  'body/value': body
