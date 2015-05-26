@@ -4,15 +4,15 @@ source:
   plugin: csv
   header_rows: 1
   keys:
-    - title
+    - Title
   csvColumns:
-    0: title
-    1: body
+    0: Title
+    1: Body
 destination:
   plugin: entity:node
 process:
   type:
     plugin: default_value
     default_value: article
-  title: title
-  'body/value': body
+  title: Title
+  'body/value': Body
