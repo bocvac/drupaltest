@@ -11,7 +11,10 @@ use Drupal\migrate\Entity\MigrationInterface;
  * Implements hook_install().
  */
 function import_install() {
-  // Define node bundles to create migrations for.
+  // Set up base path.
+  $path = dirname(__FILE__) . '/data/';
+
+  // Create imports using the node base migration.
   $bundles = array('article', 'page');
   // Load the base migration for nodes.
   $base_migration = entity_load('migration', 'import_node_base');
@@ -22,7 +25,7 @@ function import_install() {
     $migration->set('id', 'import_node_' . $type);
     // Point source path to local CSV file.
     $source = $migration->get('source');
-    $source['path'] = dirname(__FILE__) . '/data/import.node.' . $type . '.csv';
+    $source['path'] = $path . 'import.node.' . $type . '.csv';
     $migration->set('source', $source);
     // Set content type to current bundle.
     $process = $migration->get('process');
@@ -31,5 +34,22 @@ function import_install() {
     // Save the new migration.
     $migration->save();
   }
-}
 
+  // Add a 'Tags' term import using the taxonomy_term base migration.
+  $type = 'tags';
+  $base_migration = entity_load('migration', 'import_term_base');
+  $migration = $base_migration->createDuplicate();
+  $migration->set('label', 'Import terms: ' . $type);
+  $migration->set('id', 'import_term_' . $type);
+  // Point source path to local CSV file.
+  $source = $migration->get('source');
+  $source['path'] = $path . 'import.term.' . $type . '.csv';
+  $migration->set('source', $source);
+  // Set correct taxonomy term vocabulary id.
+  $process = $migration->get('process');
+  $process['vid']['default_value'] = $type;
+  $migration->set('process', $process);
+  // Save the new migration.
+  $migration->save();
+
+}

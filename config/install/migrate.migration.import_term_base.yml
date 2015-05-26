@@ -1,0 +1,17 @@
+id: import_term_base
+label: Import taxonomy terms
+source:
+  plugin: csv
+  header_rows: 1
+  keys:
+    - Name
+  csvColumns:
+    0: Name
+    1: Details
+destination:
+  plugin: entity:taxonomy_term
+process:
+  vid:
+    plugin: default_value
+  name: Name
+  description: Details
