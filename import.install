@@ -16,13 +16,13 @@ function import_install() {
   // Load the base migration for nodes.
   $base_migration = entity_load('migration', 'import_node_base');
   foreach ($bundles as $type) {
-    // Duplicate the node base creating an article migration.
+    // Duplicate the node base creating a new migration.
     $migration = $base_migration->createDuplicate();
     $migration->set('label', 'Import nodes: ' . $type);
     $migration->set('id', 'import_node_' . $type);
     // Point source path to local CSV file.
     $source = $migration->get('source');
-    $source['path'] = dirname(__FILE__) . '/data/import.base.nodes.csv';
+    $source['path'] = dirname(__FILE__) . '/data/import.node.' . $type . '.csv';
     $migration->set('source', $source);
     // Set content type to current bundle.
     $process = $migration->get('process');
