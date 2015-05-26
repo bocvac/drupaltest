@@ -13,6 +13,5 @@ destination:
 process:
   type:
     plugin: default_value
-    default_value: article
   title: Title
   'body/value': Body
