@@ -11,20 +11,25 @@ use Drupal\migrate\Entity\MigrationInterface;
  * Implements hook_install().
  */
 function import_install() {
+  // Define node bundles to create migrations for.
+  $bundles = array('article', 'page');
   // Load the base migration for nodes.
   $base_migration = entity_load('migration', 'import_node_base');
-  // Duplicate the node base creating an article migration.
-  $migration = $base_migration->createDuplicate();
-  $migration->set('id', 'import_node_article');
-  // Point source path to local CSV file.
-  $source = $migration->get('source');
-  $source['path'] = dirname(__FILE__) . '/data/import.base.nodes.csv';
-  $migration->set('source', $source);
-  // Set content type to 'article' bundle.
-  $process = $migration->get('process');
-  $process['type']['default_value'] = 'article';
-  $migration->set('process', $process);
-  // Save the new migration.
-  $migration->save();
+  foreach ($bundles as $type) {
+    // Duplicate the node base creating an article migration.
+    $migration = $base_migration->createDuplicate();
+    $migration->set('label', 'Import nodes: ' . $type);
+    $migration->set('id', 'import_node_' . $type);
+    // Point source path to local CSV file.
+    $source = $migration->get('source');
+    $source['path'] = dirname(__FILE__) . '/data/import.base.nodes.csv';
+    $migration->set('source', $source);
+    // Set content type to current bundle.
+    $process = $migration->get('process');
+    $process['type']['default_value'] = $type;
+    $migration->set('process', $process);
+    // Save the new migration.
+    $migration->save();
+  }
 }
 
