@@ -26,10 +26,23 @@ function import_install() {
     // Point source path to local CSV file.
     $source = $migration->get('source');
     $source['path'] = $path . 'import.node.' . $type . '.csv';
-    $migration->set('source', $source);
     // Set content type to current bundle.
     $process = $migration->get('process');
     $process['type']['default_value'] = $type;
+    // Add processing for Article field_tags.
+    if ($type == 'article') {
+      $source['plugin'] = 'article_node';
+      $source['csvColumns'][3] = 'Tags';
+      $process['field_tags'] = array(
+        'plugin' => 'migration',
+        'migration' => 'import_term_tags',
+        'source' => 'Tags',
+      );
+      $dependencies = array('required' => array('import_term_tags'));
+      $migration->set('migration_dependencies', $dependencies);
+    }
+    // Set new source and process modifications.
+    $migration->set('source', $source);
     $migration->set('process', $process);
     // Save the new migration.
     $migration->save();
