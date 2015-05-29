@@ -21,5 +21,15 @@ class ArticleNode extends CSV {
     if ($value = $row->getSourceProperty('Tags')) {
       $row->setSourceProperty('Tags', explode(',', $value));
     }
+
+    if ($value = $row->getSourceProperty('Image')) {
+      $path = drupal_get_path('module', 'import') . '/data/images/' . $value;
+
+      $data = file_get_contents($path);
+      $uri = file_build_uri($value);
+      $file = file_save_data($data, $uri);
+
+      $row->setSourceProperty('Image', $file);
+    }
   }
 }

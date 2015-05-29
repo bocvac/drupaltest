@@ -32,6 +32,9 @@ function import_install() {
     // Add processing for Article field_tags.
     if ($type == 'article') {
       $source['plugin'] = 'article_node';
+
+      $source['csvColumns'][2] = 'Image';
+      $process['field_image'] = 'Image';
       $source['csvColumns'][3] = 'Tags';
       $process['field_tags'] = array(
         'plugin' => 'migration',
