@@ -2,6 +2,7 @@ id: import_term_base
 label: Import taxonomy terms
 source:
   plugin: csv
+  path: '../../data/import.term.tags.csv'
   header_rows: 1
   keys:
     - Name
@@ -13,5 +14,6 @@ destination:
 process:
   vid:
     plugin: default_value
+    default_value: tags
   name: Name
   description: Details

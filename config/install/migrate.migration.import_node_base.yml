@@ -2,6 +2,7 @@ id: import_node_base
 label: Import nodes
 source:
   plugin: csv
+  path: '../../data/import.node.page.csv'
   header_rows: 1
   keys:
     - Title
@@ -13,5 +14,6 @@ destination:
 process:
   type:
     plugin: default_value
+    default_value: page
   title: Title
   'body/value': Body
