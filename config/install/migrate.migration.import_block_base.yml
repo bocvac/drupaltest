@@ -5,15 +5,17 @@ source:
   path: '../../data/import.block.basic.csv'
   header_rows: 1
   keys:
-    - Info
+    - UUID
   csvColumns:
-    0: Info
-    1: Body
+    0: UUID
+    1: Info
+    2: Body
 destination:
   plugin: entity:block_content
 process:
   type:
     plugin: default_value
     default_value: basic
+  uuid: UUID
   info: Info
   'body/value': Body
