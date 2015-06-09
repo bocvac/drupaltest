@@ -68,4 +68,17 @@ function import_install() {
   // Save the new migration.
   $migration->save();
 
+  // Add a 'Basic' block import using the block base migration.
+  $type = 'basic';
+  $base_migration = entity_load('migration', 'import_block_base');
+  $migration = $base_migration->createDuplicate();
+  $migration->set('label', 'Import blocks: ' . $type);
+  $migration->set('id', 'import_block_' . $type);
+  // Point source path to local CSV file.
+  $source = $migration->get('source');
+  $source['path'] = $path . 'import.block.' . $type . '.csv';
+  $migration->set('source', $source);
+  // Save the new migration.
+  $migration->save();
+
 }

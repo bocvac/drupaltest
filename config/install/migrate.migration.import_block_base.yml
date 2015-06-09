@@ -1,0 +1,19 @@
+id: import_block_base
+label: Import blocks
+source:
+  plugin: csv
+  path: '../../data/import.block.basic.csv'
+  header_rows: 1
+  keys:
+    - Info
+  csvColumns:
+    0: Info
+    1: Body
+destination:
+  plugin: entity:block_content
+process:
+  type:
+    plugin: default_value
+    default_value: basic
+  info: Info
+  'body/value': Body
