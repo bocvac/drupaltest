@@ -9,7 +9,6 @@ source:
   csvColumns:
     0: UUID
     1: Info
-    2: Body
 destination:
   plugin: entity:block_content
 process:
@@ -18,4 +17,3 @@ process:
     default_value: basic
   uuid: UUID
   info: Info
-  'body/value': Body

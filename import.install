@@ -77,8 +77,15 @@ function import_install() {
   // Point source path to local CSV file.
   $source = $migration->get('source');
   $source['path'] = $path . 'import.block.' . $type . '.csv';
+  // Add body/value field.
+  $process = $migration->get('process');
+  $source['csvColumns'][2] = 'Body';
+  $process['body/value'] = 'Body';
+  // Set new source and process modifications.
+  $migration->set('process', $process);
   $migration->set('source', $source);
   // Save the new migration.
   $migration->save();
 
 }
+
