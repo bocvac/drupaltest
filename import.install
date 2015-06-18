@@ -21,7 +21,7 @@ function import_install() {
   foreach ($bundles as $type) {
     // Duplicate the node base creating a new migration.
     $migration = $base_migration->createDuplicate();
-    $migration->set('label', 'Import nodes: ' . $type);
+    $migration->set('label', 'Import node:' . $type);
     $migration->set('id', 'import_node_' . $type);
     // Point source path to local CSV file.
     $source = $migration->get('source');
@@ -55,7 +55,7 @@ function import_install() {
   $type = 'tags';
   $base_migration = entity_load('migration', 'import_term_base');
   $migration = $base_migration->createDuplicate();
-  $migration->set('label', 'Import terms: ' . $type);
+  $migration->set('label', 'Import term:' . $type);
   $migration->set('id', 'import_term_' . $type);
   // Point source path to local CSV file.
   $source = $migration->get('source');
@@ -72,7 +72,7 @@ function import_install() {
   $type = 'basic';
   $base_migration = entity_load('migration', 'import_block_base');
   $migration = $base_migration->createDuplicate();
-  $migration->set('label', 'Import blocks: ' . $type);
+  $migration->set('label', 'Import block:' . $type);
   $migration->set('id', 'import_block_' . $type);
   // Point source path to local CSV file.
   $source = $migration->get('source');
