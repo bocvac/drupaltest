@@ -81,6 +81,10 @@ function import_install() {
   $process = $migration->get('process');
   $source['csvColumns'][2] = 'Body';
   $process['body/value'] = 'Body';
+  $process['body/format'] = [
+    'plugin' => 'static_map',
+    'default_value' => 'full_html'
+  ];
   // Set new source and process modifications.
   $migration->set('process', $process);
   $migration->set('source', $source);
