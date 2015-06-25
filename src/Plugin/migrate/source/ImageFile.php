@@ -23,13 +23,15 @@ class ImageFile extends CSV {
     if ($image = $row->getSourceProperty('File')) {
       $base_path = dirname($this->configuration['path']) . '/images/';
 
-      // Setup our source/destination paths
+      // Setup our source/destination paths.
       $path = $base_path . $image;
       $destination_path = 'public://' . $image;
 
-      // Normally we would map CSV columns to these values, but to reduce complexity we assume paths
+      // Normally we would map CSV columns to these values, but to reduce
+      // complexity we assume paths and status.
       $row->setSourceProperty('filepath', $path);
       $row->setDestinationProperty('uri', $destination_path);
+      $row->setDestinationProperty('status', 1);
     }
   }
 }
