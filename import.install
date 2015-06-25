@@ -91,5 +91,18 @@ function import_install() {
   // Save the new migration.
   $migration->save();
 
-}
+  // Add an Image file migration using the base file migration
+  $type = 'image';
+  $base_migration = entity_load('migration', 'import_file_base');
+  $migration = $base_migration->createDuplicate();
+  $migration->set('label', 'Import file:' . $type);
+  $migration->set('id', 'import_file_' . $type);
+  // Point source path to local CSV file.
+  $source = $migration->get('source');
+  $source['path'] = $path . 'import.file.' . $type . '.csv';
+  $source['plugin'] = 'image_file';
+  $migration->set('source', $source);
+  // Save the new migration.
+  $migration->save();
 
+}
