@@ -23,7 +23,7 @@ class ArticleNode extends CSV {
     }
 
     if ($value = $row->getSourceProperty('Image')) {
-      $path = drupal_get_path('module', 'import') . '/data/images/' . $value;
+      $path = dirname($this->configuration['path']) . '/images/' . $value;
 
       $data = file_get_contents($path);
       $uri = file_build_uri($value);
