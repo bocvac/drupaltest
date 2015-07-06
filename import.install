@@ -41,6 +41,10 @@ function import_install() {
         'migration' => 'import_term_tags',
         'source' => 'Tags',
       );
+      $process['body/format'] = [
+        'plugin' => 'static_map',
+        'default_value' => 'full_html'
+      ];
       $dependencies = array('required' => array('import_term_tags'));
       $migration->set('migration_dependencies', $dependencies);
     }
