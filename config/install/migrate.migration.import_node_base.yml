@@ -3,12 +3,9 @@ label: Import nodes
 source:
   plugin: csv
   path: '../../data/import.node.page.csv'
-  header_rows: 1
-  keys:
+  header_row_count: 1
+  identifiers:
     - Title
-  csvColumns:
-    0: Title
-    1: Body
 destination:
   plugin: entity:node
 process:

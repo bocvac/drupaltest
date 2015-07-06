@@ -3,11 +3,9 @@ label: Import files
 source:
   plugin: csv
   path: '../../data/import.file.image.csv'
-  header_rows: 1
-  keys:
+  header_row_count: 1
+  identifiers:
     - File
-  csvColumns:
-    0: File
 destination:
   plugin: entity:file
 process:

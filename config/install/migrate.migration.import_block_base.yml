@@ -3,12 +3,9 @@ label: Import blocks
 source:
   plugin: csv
   path: '../../data/import.block.basic.csv'
-  header_rows: 1
-  keys:
+  header_row_count: 1
+  identifiers:
     - UUID
-  csvColumns:
-    0: UUID
-    1: Info
 destination:
   plugin: entity:block_content
 process:

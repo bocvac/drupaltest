@@ -8,7 +8,7 @@
 namespace Drupal\import\Plugin\migrate\source;
 
 use Drupal\migrate\Row;
-use Drupal\migrate_plus\Plugin\migrate\source\CSV;
+use Drupal\migrate_source_csv\Plugin\migrate\source\CSV;
 
 /**
  * Source for Image csv.

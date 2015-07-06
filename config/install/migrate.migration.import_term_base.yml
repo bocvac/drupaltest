@@ -3,12 +3,9 @@ label: Import taxonomy terms
 source:
   plugin: csv
   path: '../../data/import.term.tags.csv'
-  header_rows: 1
-  keys:
+  header_row_count: 1
+  identifiers:
     - Name
-  csvColumns:
-    0: Name
-    1: Details
 destination:
   plugin: entity:taxonomy_term
 process:
