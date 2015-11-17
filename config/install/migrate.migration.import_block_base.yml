@@ -4,7 +4,7 @@ source:
   plugin: csv
   path: '../../data/import.block.basic.csv'
   header_row_count: 1
-  identifiers:
+  keys:
     - UUID
 destination:
   plugin: entity:block_content

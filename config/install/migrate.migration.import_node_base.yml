@@ -4,7 +4,7 @@ source:
   plugin: csv
   path: '../../data/import.node.page.csv'
   header_row_count: 1
-  identifiers:
+  keys:
     - Title
 destination:
   plugin: entity:node

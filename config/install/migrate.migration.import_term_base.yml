@@ -4,7 +4,7 @@ source:
   plugin: csv
   path: '../../data/import.term.tags.csv'
   header_row_count: 1
-  identifiers:
+  keys:
     - Name
 destination:
   plugin: entity:taxonomy_term
