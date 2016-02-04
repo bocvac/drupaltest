@@ -109,4 +109,28 @@ function import_install() {
   // Save the new migration.
   $migration->save();
 
+  // Add a 'User' user import using the user base migration.
+  $type = 'user';
+  $base_migration = entity_load('migration', 'import_user_base');
+  $migration = $base_migration->createDuplicate();
+  $migration->set('label', 'Import user:' . $type);
+  $migration->set('id', 'import_user_' . $type);
+  // Point source path to local CSV file.
+  $source = $migration->get('source');
+  $source['path'] = $path . 'import.user.' . $type . '.csv';
+  $migration->set('source', $source);
+  // Set user picture.
+  $process = $migration->get('process');
+  $process['field_user_picture'] = array(
+    'plugin' => 'migration',
+    'migration' => 'import_file_image',
+    'source' => 'Picture',
+  );
+  $migration->set('process', $process);
+  // Set up proper dependencies for image files.
+  $dependencies = array('import_file_image');
+  $migration->set('migration_dependencies', ['required' => $dependencies]);
+  // Save the new migration.
+  $migration->save();
+
 }
