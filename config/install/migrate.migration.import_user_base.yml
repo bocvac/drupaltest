@@ -16,3 +16,4 @@ process:
   pass: Pass
   mail: Mail
   status: Status
+  roles: Roles

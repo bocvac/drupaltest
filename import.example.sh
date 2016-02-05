@@ -6,6 +6,7 @@
 
 # Usage: sh import.example.sh
 echo "Running migration imports..."
+# drush migrate-import import_[type]_[bundle]
 drush mi import_node_page
 drush mi import_term_tags
 drush mi import_node_article
