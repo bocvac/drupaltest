@@ -32,7 +32,6 @@ function import_install() {
     // Add processing for Article field_tags.
     if ($type == 'article') {
       $source['plugin'] = 'article_node';
-
       $source['csvColumns'][2] = 'Image';
       $process['field_image'] = 'Image';
       $source['csvColumns'][3] = 'Tags';
@@ -41,13 +40,14 @@ function import_install() {
         'migration' => 'import_term_tags',
         'source' => 'Tags',
       );
-      $process['body/format'] = [
-        'plugin' => 'static_map',
-        'default_value' => 'full_html'
-      ];
       $dependencies = array('required' => array('import_term_tags'));
       $migration->set('migration_dependencies', $dependencies);
     }
+    // Set body fields to full_html.
+    $process['body/format'] = [
+      'plugin' => 'static_map',
+      'default_value' => 'full_html'
+    ];
     // Set new source and process modifications.
     $migration->set('source', $source);
     $migration->set('process', $process);
