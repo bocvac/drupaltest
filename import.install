@@ -121,7 +121,7 @@ function import_install() {
   $migration->set('source', $source);
   // Set user picture.
   $process = $migration->get('process');
-  $process['field_user_picture'] = array(
+  $process['user_picture'] = array(
     'plugin' => 'migration',
     'migration' => 'import_file_image',
     'source' => 'Picture',
