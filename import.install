@@ -6,6 +6,7 @@
  */
 
 use Drupal\migrate\Entity\MigrationInterface;
+use Drupal\migrate\Entity\Migration;
 
 /**
  * Implements hook_install().
@@ -15,9 +16,9 @@ function import_install() {
   $path = dirname(__FILE__) . '/data/';
 
   // Create imports using the node base migration.
-  $bundles = array('article', 'page');
+  $bundles = ['article', 'page'];
   // Load the base migration for nodes.
-  $base_migration = entity_load('migration', 'import_node_base');
+  $base_migration = Migration::load('import_node_base');
   foreach ($bundles as $type) {
     // Duplicate the node base creating a new migration.
     $migration = $base_migration->createDuplicate();
@@ -35,12 +36,12 @@ function import_install() {
       $source['csvColumns'][2] = 'Image';
       $process['field_image'] = 'Image';
       $source['csvColumns'][3] = 'Tags';
-      $process['field_tags'] = array(
+      $process['field_tags'] = [
         'plugin' => 'migration',
         'migration' => 'import_term_tags',
         'source' => 'Tags',
-      );
-      $dependencies = array('required' => array('import_term_tags'));
+      ];
+      $dependencies = ['required' => ['import_term_tags']];
       $migration->set('migration_dependencies', $dependencies);
     }
     // Set body fields to full_html.
@@ -57,7 +58,7 @@ function import_install() {
 
   // Add a 'Tags' term import using the taxonomy_term base migration.
   $type = 'tags';
-  $base_migration = entity_load('migration', 'import_term_base');
+  $base_migration = Migration::load('import_term_base');
   $migration = $base_migration->createDuplicate();
   $migration->set('label', 'Import term:' . $type);
   $migration->set('id', 'import_term_' . $type);
@@ -74,7 +75,7 @@ function import_install() {
 
   // Add a 'Basic' block import using the block base migration.
   $type = 'basic';
-  $base_migration = entity_load('migration', 'import_block_base');
+  $base_migration = Migration::load('import_block_base');
   $migration = $base_migration->createDuplicate();
   $migration->set('label', 'Import block:' . $type);
   $migration->set('id', 'import_block_' . $type);
@@ -97,7 +98,7 @@ function import_install() {
 
   // Add an Image file migration using the base file migration
   $type = 'image';
-  $base_migration = entity_load('migration', 'import_file_base');
+  $base_migration = Migration::load('import_file_base');
   $migration = $base_migration->createDuplicate();
   $migration->set('label', 'Import file:' . $type);
   $migration->set('id', 'import_file_' . $type);
@@ -111,7 +112,7 @@ function import_install() {
 
   // Add a 'User' user import using the user base migration.
   $type = 'user';
-  $base_migration = entity_load('migration', 'import_user_base');
+  $base_migration = Migration::load('import_user_base');
   $migration = $base_migration->createDuplicate();
   $migration->set('label', 'Import user:' . $type);
   $migration->set('id', 'import_user_' . $type);
@@ -121,16 +122,39 @@ function import_install() {
   $migration->set('source', $source);
   // Set user picture.
   $process = $migration->get('process');
-  $process['user_picture'] = array(
+  $process['user_picture'] = [
     'plugin' => 'migration',
     'migration' => 'import_file_image',
     'source' => 'Picture',
-  );
+  ];
   $migration->set('process', $process);
   // Set up proper dependencies for image files.
-  $dependencies = array('import_file_image');
+  $dependencies = ['import_file_image'];
   $migration->set('migration_dependencies', ['required' => $dependencies]);
   // Save the new migration.
+  $migration->save();
+
+  // Add a 'Default comment' comment import using the comment base migration.
+  $type = 'comment';
+  $base_migration = Migration::load('import_comment_base');
+  $migration = $base_migration->createDuplicate();
+  $migration->set('label', 'Import comment:' . $type);
+  $migration->set('id', 'import_comment_' . $type);
+  // Point source path to local CSV file.
+  $source = $migration->get('source');
+  $source['path'] = $path . 'import.comment.' . $type . '.csv';
+  $source['plugin'] = 'node_comment';
+  $migration->set('source', $source);
+  $process = $migration->get('process');
+  $process['entity_id'] = [
+    'plugin' => 'migration',
+    'migration' => 'import_node_article',
+    'source' => 'Content',
+  ];
+  $migration->set('process', $process);
+  // Set up proper dependencies for comments.
+  $dependencies = ['import_node_article'];
+  $migration->set('migration_dependencies', ['required' => $dependencies]);
   $migration->save();
 
 }
