@@ -127,10 +127,15 @@ function import_install() {
     'migration' => 'import_file_image',
     'source' => 'Picture',
   ];
-  // Set a default previous login date to ~1-4 weeks ago.
+  // Set a default access/login date to ~1-4 weeks ago.
+  $time = strtotime("-" . rand(1,4) . "week");
   $process['access'] = [
     'plugin' => 'static_map',
-    'default_value' => strtotime("-" . rand(1,4) . "week"),
+    'default_value' => $time,
+  ];
+  $process['login'] = [
+    'plugin' => 'static_map',
+    'default_value' = $time,
   ];
   $migration->set('process', $process);
   // Set up proper dependencies for image files.
