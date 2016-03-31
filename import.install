@@ -135,7 +135,7 @@ function import_install() {
   ];
   $process['login'] = [
     'plugin' => 'static_map',
-    'default_value' = $time,
+    'default_value' => $time,
   ];
   $migration->set('process', $process);
   // Set up proper dependencies for image files.
