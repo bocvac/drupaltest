@@ -46,7 +46,7 @@ function import_install() {
     }
     // Set body fields to full_html.
     $process['body/format'] = [
-      'plugin' => 'static_map',
+      'plugin' => 'default_value',
       'default_value' => 'full_html'
     ];
     // Set new source and process modifications.
@@ -87,7 +87,7 @@ function import_install() {
   $source['csvColumns'][2] = 'Body';
   $process['body/value'] = 'Body';
   $process['body/format'] = [
-    'plugin' => 'static_map',
+    'plugin' => 'default_value',
     'default_value' => 'full_html'
   ];
   // Set new source and process modifications.
@@ -130,11 +130,11 @@ function import_install() {
   // Set a default access/login date to ~1-4 weeks ago.
   $time = strtotime("-" . rand(1,4) . "week");
   $process['access'] = [
-    'plugin' => 'static_map',
+    'plugin' => 'default_value',
     'default_value' => $time,
   ];
   $process['login'] = [
-    'plugin' => 'static_map',
+    'plugin' => 'default_value',
     'default_value' => $time,
   ];
   $migration->set('process', $process);
