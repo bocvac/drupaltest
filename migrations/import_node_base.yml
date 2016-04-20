@@ -2,7 +2,7 @@ id: import_node_base
 label: Import nodes
 source:
   plugin: csv
-  path: '../../data/import.node.page.csv'
+  path: '../data/import.node.page.csv'
   header_row_count: 1
   keys:
     - Title

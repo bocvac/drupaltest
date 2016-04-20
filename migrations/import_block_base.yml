@@ -2,7 +2,7 @@ id: import_block_base
 label: Import blocks
 source:
   plugin: csv
-  path: '../../data/import.block.basic.csv'
+  path: '../data/import.block.basic.csv'
   header_row_count: 1
   keys:
     - UUID

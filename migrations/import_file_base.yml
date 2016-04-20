@@ -2,7 +2,7 @@ id: import_file_base
 label: Import files
 source:
   plugin: csv
-  path: '../../data/import.file.image.csv'
+  path: '../data/import.file.image.csv'
   header_row_count: 1
   keys:
     - File

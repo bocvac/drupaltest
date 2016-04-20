@@ -2,7 +2,7 @@ id: import_comment_base
 label: Import comments
 source:
   plugin: csv
-  path: '../../data/import.comment.comment.csv'
+  path: '../data/import.comment.comment.csv'
   header_row_count: 1
   keys:
     - Subject

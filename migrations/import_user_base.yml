@@ -2,7 +2,7 @@ id: import_user_base
 label: Import users
 source:
   plugin: csv
-  path: '../../data/import.user.user.csv'
+  path: '../data/import.user.user.csv'
   header_row_count: 1
   keys:
     - Name
