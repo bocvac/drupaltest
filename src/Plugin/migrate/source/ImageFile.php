@@ -27,6 +27,9 @@ class ImageFile extends CSV {
       $path = $base_path . $image;
       $destination_path = 'public://' . $image;
 
+      // Copy the file.
+      file_unmanaged_copy($path, $destination_path, FILE_EXISTS_REPLACE);
+
       // Normally we would map CSV columns to these values, but to reduce
       // complexity we assume paths and status.
       $row->setSourceProperty('filepath', $path);
